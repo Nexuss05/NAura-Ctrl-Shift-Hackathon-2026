@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VERDANT — Proof-of-Impact Agent Swarm Console</title>
+  <meta name="description" content="Verdant is a verified climate finance protocol where payments are unlocked automatically by physical real-world evidence of ecological restoration verified by an AI swarm.">
+  
+  <!-- Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Globe.gl & Three.js Libraries -->
+  <script src="https://unpkg.com/three"></script>
+  <script src="https://unpkg.com/globe.gl"></script>
+
+  <!-- External Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- SIDEBAR PANEL -->
+    <aside class="sidebar">
+      <div class="brand-section">
+        <div class="brand-logo">🌱</div>
+        <div>
+          <div class="brand-name">VERDANT</div>
+          <div class="brand-tagline">Climate Agent Swarm</div>
+        </div>
+      </div>
+
+      <div class="status-badge">
+        <span class="status-dot"></span>
+        <span>Swarm Online (Devnet)</span>
+      </div>
+
+      <div class="sidebar-title">Monitored Impact Zones</div>
+      <div class="project-list" id="project-selector-list">
+        <!-- Project 1 -->
+        <div class="project-item active" data-id="project-maremma">
+          <div class="project-item-header">
+            <span class="project-item-name">Maremma Zone</span>
+            <span class="badge badge-green" style="font-size:9px; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.2); padding:1px 4px; border-radius:3px;">P0</span>
+          </div>
+          <div class="project-item-loc">Grosseto, Italy</div>
+          <div class="project-item-stats">
+            <span>NDVI Baseline:</span>
+            <span class="project-item-ndvi">0.38</span>
+          </div>
+        </div>
+
+        <!-- Project 2 -->
+        <div class="project-item" data-id="project-kenya">
+          <div class="project-item-header">
+            <span class="project-item-name">Mau Forest</span>
+            <span class="badge badge-green" style="font-size:9px; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.2); padding:1px 4px; border-radius:3px;">P1</span>
+          </div>
+          <div class="project-item-loc">Rift Valley, Kenya</div>
+          <div class="project-item-stats">
+            <span>NDVI Baseline:</span>
+            <span class="project-item-ndvi">0.42</span>
+          </div>
+        </div>
+
+        <!-- Project 3 -->
+        <div class="project-item" data-id="project-amazon">
+          <div class="project-item-header">
+            <span class="project-item-name">Xingu Basin</span>
+            <span class="badge badge-green" style="font-size:9px; background:rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.2); padding:1px 4px; border-radius:3px;">P1</span>
+          </div>
+          <div class="project-item-loc">Mato Grosso, Brazil</div>
+          <div class="project-item-stats">
+            <span>NDVI Baseline:</span>
+            <span class="project-item-ndvi">0.48</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wallet Controller Widget -->
+      <div class="wallet-widget">
+        <div class="wallet-header">
+          <div class="stat-label">User wallet</div>
+        </div>
+        <div id="wallet-status-indicator" style="font-size:11px; margin-bottom:0.75rem; display:flex; align-items:center; gap:0.4rem;">
+          <span class="status-dot" style="background:#ef4444; box-shadow:0 0 8px #ef4444;"></span> Wallet: Disconnected
+        </div>
+        <button class="wallet-btn" id="connect-wallet-btn">Connect Demo Wallet</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONSOLE -->
+    <main class="main-dashboard">
+      
+      <!-- TOP NAVIGATION BAR -->
+      <header class="top-bar">
+        <h1 style="font-size: 15px; font-weight: 600; font-family: var(--font-mono); letter-spacing: 0.05em; color: #fff;">
+          PROOF-OF-IMPACT SWARM CONTROLLER
+        </h1>
+        
+        <div class="top-bar-stats">
+          <div class="stat-item">
+            <span class="stat-label">Total Escrow locked</span>
+            <span class="stat-value" id="stat-escrow-locked">180.00 ETH</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Impact Released</span>
+            <span class="stat-value accent" id="stat-total-released">52.50 ETH</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Active Agents</span>
+            <span class="stat-value" style="color:var(--color-green)">3 Swarm Nodes</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- DASHBOARD WORKSPACE GRID -->
+      <div class="dashboard-grid">
+        
+        <!-- MAP / GLOBE CONSOLE (Top-Left) -->
+        <section class="globe-container">
+          <div id="globe-canvas" style="width: 100%; height: 100%;"></div>
+          
+          <!-- Globe Overlay HUD Controls -->
+          <div class="globe-overlay-controls">
+            <div class="overlay-card">
+              <div class="overlay-card-title">Consensus State</div>
+              <div style="font-size:11px; color:var(--text-muted); line-height:1.6;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
+                  <span>Observer Node (Vision):</span> <span style="color:var(--color-green); font-weight:600;">ACTIVE</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
+                  <span>Auditor Node (Adversarial):</span> <span style="color:var(--color-green); font-weight:600;">ACTIVE</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span>Treasurer Node (Signer):</span> <span style="color:var(--color-green); font-weight:600;">ACTIVE</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="overlay-card">
+              <div class="overlay-card-title">Network Info</div>
+              <div style="font-size:11px; color:var(--text-muted); font-family:var(--font-mono);">
+                <div>Chain: Solana Devnet</div>
+                <div>Escrow: Anchor Program</div>
+                <div>Oracles: Sentinel-2 L2A</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- INSPECTOR PANEL (Right Column) -->
+        <section class="inspector-panel">
+          
+          <!-- Project Detail Section -->
+          <div class="section-card" id="project-detail-card">
+            <div class="section-title">
+              <i data-lucide="compass"></i>
+              <span id="inspector-project-name">Maremma Restoration Zone</span>
+            </div>
+            <div id="inspector-project-loc" style="font-size:11px; font-family:var(--font-mono); color:var(--color-green); margin-bottom:0.75rem;">
+              Grosseto, Tuscany, Italy (42.716° N, 11.114° E)
+            </div>
+            <p id="inspector-project-desc" style="font-size:12px; color:var(--text-muted); margin-bottom:1.25rem; line-height:1.6;">
+              Riforestazione di aree ex-minerarie e bonifica del suolo attraverso essenze native della macchia mediterranea. Escrow attivato da KlimaDAO.
+            </p>
+
+            <!-- Satellite Slider Comparer -->
+            <div class="satellite-visualizer" id="satellite-visualizer">
+              <img src="" class="satellite-image before" alt="Sentinel-2 Base T0">
+              <img src="" class="satellite-image after" alt="Sentinel-2 Impact T1">
+              
+              <div class="image-slider-bar" id="slider-bar">
+                <div class="image-slider-handle">
+                  <i data-lucide="chevrons-left-right" style="width:12px; height:12px;"></i>
+                </div>
+              </div>
+
+              <span class="slider-label before-lbl">BEFORE (T0)</span>
+              <span class="slider-label after-lbl">AFTER (RESTORED)</span>
+            </div>
+
+            <!-- NDVI Progress & Targets -->
+            <div class="ndvi-metrics-row">
+              <div class="ndvi-metric-card">
+                <span class="stat-label">Baseline NDVI</span>
+                <div class="ndvi-metric-val amber" id="inspector-ndvi-baseline">0.38</div>
+              </div>
+              <div class="ndvi-metric-card">
+                <span class="stat-label">Current NDVI</span>
+                <div class="ndvi-metric-val green" id="inspector-ndvi-current">0.38</div>
+              </div>
+              <div class="ndvi-metric-card">
+                <span class="stat-label">Target NDVI</span>
+                <div class="ndvi-metric-val green" id="inspector-ndvi-target">0.52</div>
+              </div>
+            </div>
+
+            <div style="margin-top:1rem;">
+              <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted); margin-bottom:0.25rem;">
+                <span>NDVI Target Restoration Progress</span>
+                <span id="ndvi-progress-val" style="font-family:var(--font-mono); font-weight:600; color:var(--color-green);">0%</span>
+              </div>
+              <div style="width:100%; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden;">
+                <div id="ndvi-progress-bar" style="width:0%; height:100%; background:var(--color-green); transition:width 0.5s ease-on-out;"></div>
+              </div>
+            </div>
+
+            <!-- Escrow Contract Details -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1.25rem; padding-top:1rem; border-top:1px solid var(--border-color);">
+              <div>
+                <span class="stat-label">Escrow Locked</span>
+                <div style="font-size:14px; font-weight:600; color:#fff; font-family:var(--font-mono);" id="inspector-escrow-balance">15.00 ETH</div>
+              </div>
+              <div>
+                <span class="stat-label">Escrow Released</span>
+                <div style="font-size:14px; font-weight:600; color:var(--color-green); font-family:var(--font-mono);" id="inspector-released-amount">0.00 ETH</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Privacy Pools v2 Widget (quickstart.md) -->
+          <div class="section-card privacy-pool-widget">
+            <div class="section-title">
+              <i data-lucide="shield-check" style="color:var(--color-blue)"></i>
+              <span>zk-Privacy Funding Layer</span>
+            </div>
+            
+            <!-- Tabs -->
+            <div class="widget-tabs">
+              <div class="widget-tab active" data-tab="keys">1. Derive Keys</div>
+              <div class="widget-tab" data-tab="deposit">2. Deposit</div>
+              <div class="widget-tab" data-tab="transfer">3. Private Transfer</div>
+            </div>
+
+            <!-- Tab 1: Keys Derivation -->
+            <div class="widget-content-pane active" id="tab-keys">
+              <div style="font-size:12px; color:var(--text-muted); margin-bottom:1rem; line-height:1.5;">
+                Derive three private keys plus one public viewing key from a single EIP-712 signature payload (derived client-side) to build a secure pool session.
+              </div>
+              <button class="btn-action" id="derive-keys-btn">
+                <i data-lucide="signature"></i> Derive Protocol Keys
+              </button>
+              
+              <div id="derived-keys-details" class="keys-display-card" style="margin-top:1rem;">
+                <div style="color:var(--text-faint); font-style:italic; font-size:10px; text-align:center;">
+                  No keys derived yet. Sign the derivation payload.
+                </div>
+              </div>
+              
+              <div id="keys-derivation-status" class="flow-step-status">
+                <span style="color:var(--text-faint)">Status: Idle</span>
+              </div>
+            </div>
+
+            <!-- Tab 2: Deposit -->
+            <div class="widget-content-pane" id="tab-deposit">
+              <div style="font-size:12px; color:var(--text-muted); margin-bottom:1rem; line-height:1.5;">
+                Deposit native Sepolia ETH into the Privacy Pools contract. The deposit generates a secret ZK commitment note.
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Asset to Deposit</label>
+                <div class="form-input" style="background:rgba(255,255,255,0.02); display:flex; justify-content:space-between; align-items:center;">
+                  <span>NATIVE ETH</span>
+                  <span style="font-size:10px; color:var(--text-faint)">0xeee...eeee</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Amount (ETH)</label>
+                <input type="number" step="0.01" class="form-input" id="input-deposit-amount" value="0.01">
+              </div>
+
+              <button class="btn-action" id="deposit-btn" style="background:linear-gradient(135deg, var(--color-blue), #1d4ed8)">
+                <i data-lucide="plus-circle"></i> Deposit to Privacy Pool
+              </button>
+
+              <div id="deposit-flow-status" class="flow-step-status">
+                <span style="color:var(--text-faint)">Status: Waiting for Key Derivation</span>
+              </div>
+            </div>
+
+            <!-- Tab 3: Private Transfer -->
+            <div class="widget-content-pane" id="tab-transfer">
+              <div style="font-size:12px; color:var(--text-muted); margin-bottom:1rem; line-height:1.5;">
+                Spend a secret note to fund the active project. A ZK proof is generated client-side and relayed anonymously through 0xBow relayer.
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Select Active Spent Note</label>
+                <select class="form-input" id="select-transfer-note">
+                  <option value="" disabled selected>No notes available. Make a deposit first.</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Recipient Smart Account (Solana PDA)</label>
+                <div class="form-input" style="color:var(--color-green); overflow:hidden; text-overflow:ellipsis;">
+                  8yTrdM...fG5wD (PDA derived from Project ID)
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Transfer Amount (ETH)</label>
+                <input type="number" step="0.001" class="form-input" id="input-transfer-amount" value="0.005">
+              </div>
+
+              <button class="btn-action" id="transfer-btn">
+                <i data-lucide="send"></i> Send zk-Private Transfer
+              </button>
+
+              <div id="transfer-flow-status" class="flow-step-status">
+                <span style="color:var(--text-faint)">Status: Idle</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Transaction Explorer Widget -->
+          <div class="section-card tx-log-section">
+            <div class="section-title">
+              <i data-lucide="database" style="color:var(--color-blue)"></i>
+              <span>Onchain Transaction Explorer</span>
+            </div>
+            
+            <table class="tx-table">
+              <thead>
+                <tr>
+                  <th>Net</th>
+                  <th>Method</th>
+                  <th>Value</th>
+                  <th>Status</th>
+                  <th>Hash</th>
+                  <th>Age</th>
+                </tr>
+              </thead>
+              <tbody id="tx-table-body">
+                <!-- Rows injected dynamically by app.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- AGENT SWARM DEBATE TERMINAL (Bottom-Left) -->
+        <section class="agent-console-container">
+          <div class="console-header">
+            <div class="console-title">
+              <i data-lucide="terminal"></i>
+              <span>Swarm consensus logs (Observer / Auditor / Treasurer)</span>
+            </div>
+            <button class="wallet-btn" id="run-swarm-btn" style="width:180px; background:linear-gradient(135deg, var(--color-green), #047857)">
+              <i data-lucide="play" style="width:12px; height:12px; margin-right:4px;"></i> Run Swarm Scan
+            </button>
+          </div>
+          <div class="console-body" id="console-logs">
+            <div class="console-log-row" style="color:var(--text-faint);">
+              [System] Swarm status online. Select Maremma project and click 'Run Swarm Scan' to initiate Proof-of-Impact simulation.
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- EIP-712 SIGNATURE MODAL BACKDROP -->
+  <div class="sig-modal-backdrop" id="sig-modal-backdrop">
+    <div class="sig-modal">
+      <div class="sig-title">
+        <i data-lucide="shield-alert"></i>
+        <span>Signature Request (EIP-712)</span>
+      </div>
+      <div class="sig-desc">
+        The application is requesting a signature to derive protocol keys for Privacy Pools v2. This signature never leaves your browser.
+      </div>
+      
+      <div class="sig-payload" id="sig-payload-content">
+        <!-- Injected dynamically by app.js -->
+      </div>
+      
+      <div class="sig-actions">
+        <button class="sig-btn sig-btn-cancel" id="cancel-sig-btn">Reject</button>
+        <button class="sig-btn sig-btn-confirm" id="confirm-sig-btn">Sign Message</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Scripts (MVVM Architecture) -->
+  <script src="model.js"></script>
+  <script src="viewmodel.js"></script>
+  <script src="view.js"></script>
+  <script>
+    // Initialize MVVM components
+    const model = new VerdantModel();
+    const viewModel = new VerdantViewModel(model);
+    const view = new VerdantView(model, viewModel);
+  </script>
+</body>
+</html>
