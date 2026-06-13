@@ -82,7 +82,7 @@ To run the real Python agent swarm, raster calculations, and real Solana devnet 
    ```
 
 4. **Launch Dashboard**:
-   Open [index.html](file:///Users/matteocotena/Documents/Hackathon%20CTRL:SHIFT/Github/NAura-Backend/index.html) in your browser. 
+   Open [index.html](file:///Users/matteocotena/Documents/Hackathon%20CTRL-SHIFT/Github/NAura-Backend/index.html) in your browser. 
    * The dashboard will detect the running WebSocket server and connect automatically.
    * Clicking **Run Swarm Scan** will now trigger the real Python swarm: downloading TIFF data, running `rasterio` NDVI calculations, requesting devnet SOL fee airdrops, signing and broadcasting real transactions to Solana Devnet, and streaming live logs back to the frontend.
 

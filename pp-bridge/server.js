@@ -282,6 +282,59 @@ app.post('/api/pp/deposit', async (req, res) => {
   }
 });
 
+// ─── Direct Public Deposit (No Privacy Pools) ───────────────────────────────
+app.post('/api/pp/public-deposit', async (req, res) => {
+  try {
+    const { amount = '0.05' } = req.body;
+    const weiAmount = parseEther(amount);
+
+    if (!donorWalletClient || !escrowAccount) {
+      // Simulated direct deposit
+      console.log(`[PP Bridge] Simulated public deposit of ${amount} ETH directly to escrow`);
+      await new Promise(r => setTimeout(r, 1500));
+      const mockTxHash = '0x' + Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+
+      // Update bridge balance
+      bridgeBalance += weiAmount;
+
+      return res.json({
+        status: 'deposited',
+        mode: 'simulated',
+        txHash: mockTxHash,
+        amount,
+        bridgeBalanceEth: formatEther(bridgeBalance),
+      });
+    }
+
+    // Real direct transfer: donorWalletClient.sendTransaction() to escrowAccount.address
+    console.log(`[PP Bridge] Sending public transfer of ${amount} ETH to escrow...`);
+    const hash = await donorWalletClient.sendTransaction({
+      to: escrowAccount.address,
+      value: weiAmount,
+    });
+
+    console.log(`[PP Bridge] Transaction sent. Hash: ${hash}`);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+    // Update bridge balance
+    bridgeBalance += weiAmount;
+
+    console.log(`[PP Bridge] ✅ Public deposit settled: ${hash}`);
+
+    res.json({
+      status: 'deposited',
+      mode: 'real',
+      txHash: hash,
+      amount,
+      bridgeBalanceEth: formatEther(bridgeBalance),
+    });
+  } catch (err) {
+    console.error('[PP Bridge] Public deposit error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Step 4: Discover Notes ─────────────────────────────────────────────────
 app.post('/api/pp/discover-notes', async (req, res) => {
   try {

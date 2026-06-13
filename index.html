@@ -238,40 +238,114 @@
               <i data-lucide="shield-check" style="color:var(--color-blue)"></i>
               <span>zk-Privacy Funding Layer</span>
             </div>
-            
-            <!-- Tabs -->
-            <div class="widget-tabs">
-              <div class="widget-tab active" data-tab="keys">1. Derive Keys</div>
-              <div class="widget-tab" data-tab="deposit">2. Deposit</div>
-              <div class="widget-tab" data-tab="transfer">3. Private Transfer</div>
+                 <!-- Mode Switcher Toggle -->
+            <div class="funding-mode-toggle-container" style="display:flex; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:6px; padding:3px; margin-bottom:1rem; position:relative;">
+              <button class="toggle-mode-btn active" id="toggle-private-mode" style="flex:1; border:none; background:var(--color-blue); color:#fff; font-size:11px; padding:6px; border-radius:4px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
+                <i data-lucide="shield" style="width:12px; height:12px;"></i> zk-Privacy Pool (Shielded)
+              </button>
+              <button class="toggle-mode-btn" id="toggle-public-mode" style="flex:1; border:none; background:transparent; color:var(--text-muted); font-size:11px; padding:6px; border-radius:4px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
+                <i data-lucide="globe" style="width:12px; height:12px;"></i> Public Direct Deposit
+              </button>
             </div>
 
-            <!-- Tab 1: Keys Derivation -->
-            <div class="widget-content-pane active" id="tab-keys">
-              <div style="font-size:12px; color:var(--text-muted); margin-bottom:1rem; line-height:1.5;">
-                Derive three private keys plus one public viewing key from a single EIP-712 signature payload (derived client-side) to build a secure pool session.
+            <!-- ZK Mode UI Content -->
+            <div id="zk-mode-content">
+              <!-- Tabs -->
+              <div class="widget-tabs">
+                <div class="widget-tab active" data-tab="keys">1. Derive Keys</div>
+                <div class="widget-tab" data-tab="deposit">2. Deposit</div>
+                <div class="widget-tab" data-tab="transfer">3. Private Transfer</div>
               </div>
-              <button class="btn-action" id="derive-keys-btn">
-                <i data-lucide="signature"></i> Derive Protocol Keys
-              </button>
-              
-              <div id="derived-keys-details" class="keys-display-card" style="margin-top:1rem;">
-                <div style="color:var(--text-faint); font-style:italic; font-size:10px; text-align:center;">
-                  No keys derived yet. Sign the derivation payload.
+
+              <!-- Tab 1: Keys Derivation -->
+              <div class="widget-content-pane active" id="tab-keys">
+                <div style="font-size:12px; color:var(--text-muted); margin-bottom:1rem; line-height:1.5;">
+                  Derive three private keys plus one public viewing key from a single EIP-712 signature payload (derived client-side) to build a secure pool session.
+                </div>
+                <button class="btn-action" id="derive-keys-btn">
+                  <i data-lucide="signature"></i> Derive Protocol Keys
+                </button>
+                
+                <div id="derived-keys-details" class="keys-display-card" style="margin-top:1rem;">
+                  <div style="color:var(--text-faint); font-style:italic; font-size:10px; text-align:center;">
+                    No keys derived yet. Sign the derivation payload.
+                  </div>
+                </div>
+                
+                <div id="keys-derivation-status" class="flow-step-status">
+                  <span style="color:var(--text-faint)">Status: Idle</span>
                 </div>
               </div>
-              
-              <div id="keys-derivation-status" class="flow-step-status">
-                <span style="color:var(--text-faint)">Status: Idle</span>
+
+              <!-- Tab 2: Deposit -->
+              <div class="widget-content-pane" id="tab-deposit">
+                <div style="font-size:12px; color:var(--text-muted); margin-bottom:1rem; line-height:1.5;">
+                  Deposit native Sepolia ETH into the Privacy Pools contract. The deposit generates a ZK commitment note.
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Asset to Deposit</label>
+                  <div class="form-input" style="background:rgba(255,255,255,0.02); display:flex; justify-content:space-between; align-items:center;">
+                    <span>NATIVE ETH</span>
+                    <span style="font-size:10px; color:var(--text-faint)">0xeee...eeee</span>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Amount (ETH)</label>
+                  <input type="number" step="0.01" class="form-input" id="input-deposit-amount" value="0.01">
+                </div>
+
+                <button class="btn-action" id="deposit-btn" style="background:linear-gradient(135deg, var(--color-blue), #1d4ed8)">
+                  <i data-lucide="plus-circle"></i> Deposit to Privacy Pool
+                </button>
+
+                <div id="deposit-flow-status" class="flow-step-status">
+                  <span style="color:var(--text-faint)">Status: Waiting for Key Derivation</span>
+                </div>
+              </div>
+
+              <!-- Tab 3: Private Transfer -->
+              <div class="widget-content-pane" id="tab-transfer">
+                <div style="font-size:12px; color:var(--text-muted); margin-bottom:1rem; line-height:1.5;">
+                  Spend a secret note to fund the active project. A ZK proof is generated client-side and relayed anonymously through 0xBow relayer.
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Select Active Spent Note</label>
+                  <select class="form-input" id="select-transfer-note">
+                    <option value="" disabled selected>No notes available. Make a deposit first.</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Recipient Smart Account (Solana PDA)</label>
+                  <div class="form-input" style="color:var(--color-green); overflow:hidden; text-overflow:ellipsis;">
+                    8yTrdM...fG5wD (PDA derived from Project ID)
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Transfer Amount (ETH)</label>
+                  <input type="number" step="0.001" class="form-input" id="input-transfer-amount" value="0.005">
+                </div>
+
+                <button class="btn-action" id="transfer-btn">
+                  <i data-lucide="send"></i> Send zk-Private Transfer
+                </button>
+
+                <div id="transfer-flow-status" class="flow-step-status">
+                  <span style="color:var(--text-faint)">Status: Idle</span>
+                </div>
               </div>
             </div>
 
-            <!-- Tab 2: Deposit -->
-            <div class="widget-content-pane" id="tab-deposit">
+            <!-- Public Mode UI Content -->
+            <div id="public-mode-content" style="display:none;">
               <div style="font-size:12px; color:var(--text-muted); margin-bottom:1rem; line-height:1.5;">
-                Deposit native Sepolia ETH into the Privacy Pools contract. The deposit generates a secret ZK commitment note.
+                Deposit native ETH directly to the project's escrow account publicly. This transaction will be visible on Etherscan and publicly linked to your wallet address.
               </div>
-              
+
               <div class="form-group">
                 <label class="form-label">Asset to Deposit</label>
                 <div class="form-input" style="background:rgba(255,255,255,0.02); display:flex; justify-content:space-between; align-items:center;">
@@ -282,48 +356,14 @@
 
               <div class="form-group">
                 <label class="form-label">Amount (ETH)</label>
-                <input type="number" step="0.01" class="form-input" id="input-deposit-amount" value="0.01">
+                <input type="number" step="0.01" class="form-input" id="input-public-amount" value="0.05">
               </div>
 
-              <button class="btn-action" id="deposit-btn" style="background:linear-gradient(135deg, var(--color-blue), #1d4ed8)">
-                <i data-lucide="plus-circle"></i> Deposit to Privacy Pool
+              <button class="btn-action" id="public-deposit-btn" style="background:linear-gradient(135deg, var(--color-green), #047857)">
+                <i data-lucide="globe"></i> Fund Publicly
               </button>
 
-              <div id="deposit-flow-status" class="flow-step-status">
-                <span style="color:var(--text-faint)">Status: Waiting for Key Derivation</span>
-              </div>
-            </div>
-
-            <!-- Tab 3: Private Transfer -->
-            <div class="widget-content-pane" id="tab-transfer">
-              <div style="font-size:12px; color:var(--text-muted); margin-bottom:1rem; line-height:1.5;">
-                Spend a secret note to fund the active project. A ZK proof is generated client-side and relayed anonymously through 0xBow relayer.
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Select Active Spent Note</label>
-                <select class="form-input" id="select-transfer-note">
-                  <option value="" disabled selected>No notes available. Make a deposit first.</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Recipient Smart Account (Solana PDA)</label>
-                <div class="form-input" style="color:var(--color-green); overflow:hidden; text-overflow:ellipsis;">
-                  8yTrdM...fG5wD (PDA derived from Project ID)
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Transfer Amount (ETH)</label>
-                <input type="number" step="0.001" class="form-input" id="input-transfer-amount" value="0.005">
-              </div>
-
-              <button class="btn-action" id="transfer-btn">
-                <i data-lucide="send"></i> Send zk-Private Transfer
-              </button>
-
-              <div id="transfer-flow-status" class="flow-step-status">
+              <div id="public-flow-status" class="flow-step-status">
                 <span style="color:var(--text-faint)">Status: Idle</span>
               </div>
             </div>

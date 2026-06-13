@@ -58,6 +58,15 @@ class NAuraView {
     this.sigModalBackdrop = document.getElementById("sig-modal-backdrop");
     this.cancelSigBtn = document.getElementById("cancel-sig-btn");
     this.confirmSigBtn = document.getElementById("confirm-sig-btn");
+
+    // Public Mode Elements
+    this.togglePrivateMode = document.getElementById("toggle-private-mode");
+    this.togglePublicMode = document.getElementById("toggle-public-mode");
+    this.zkModeContent = document.getElementById("zk-mode-content");
+    this.publicModeContent = document.getElementById("public-mode-content");
+    this.publicDepositBtn = document.getElementById("public-deposit-btn");
+    this.inputPublicAmount = document.getElementById("input-public-amount");
+    this.publicFlowStatus = document.getElementById("public-flow-status");
     
     this.init();
   }
@@ -156,6 +165,38 @@ class NAuraView {
         const tabId = e.currentTarget.getAttribute("data-tab");
         this.switchTabsUI(tabId);
       });
+    });
+
+    // Toggle Mode Event Listeners
+    this.togglePrivateMode.addEventListener("click", () => {
+      this.togglePrivateMode.classList.add("active");
+      this.togglePrivateMode.style.background = "var(--color-blue)";
+      this.togglePrivateMode.style.color = "#fff";
+      
+      this.togglePublicMode.classList.remove("active");
+      this.togglePublicMode.style.background = "transparent";
+      this.togglePublicMode.style.color = "var(--text-muted)";
+      
+      this.zkModeContent.style.display = "block";
+      this.publicModeContent.style.display = "none";
+    });
+
+    this.togglePublicMode.addEventListener("click", () => {
+      this.togglePublicMode.classList.add("active");
+      this.togglePublicMode.style.background = "var(--color-blue)";
+      this.togglePublicMode.style.color = "#fff";
+      
+      this.togglePrivateMode.classList.remove("active");
+      this.togglePrivateMode.style.background = "transparent";
+      this.togglePrivateMode.style.color = "var(--text-muted)";
+      
+      this.zkModeContent.style.display = "none";
+      this.publicModeContent.style.display = "block";
+    });
+
+    this.publicDepositBtn.addEventListener("click", () => {
+      const val = this.inputPublicAmount.value;
+      this.viewModel.executePublicDeposit(val);
     });
 
     // Privacy Pools Action clicks

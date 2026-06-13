@@ -260,6 +260,93 @@ class NAuraViewModel {
     }
   }
 
+  async executePublicDeposit(amount) {
+    const statusEl = document.getElementById("public-flow-status");
+    const btnEl = document.getElementById("public-deposit-btn");
+    
+    if (statusEl) statusEl.innerHTML = `<div class="flow-log-line"><i class="flow-log-icon blue animate-spin" data-lucide="loader"></i> <span>Initiating public deposit of ${amount} ETH directly to escrow...</span></div>`;
+    if (btnEl) btnEl.disabled = true;
+    lucide.createIcons();
+
+    if (this.model.state.ppBridgeConnected) {
+      try {
+        this.logLocal("system", `[Bridge] Initiating public direct deposit of ${amount} ETH (Sepolia)...`, "system");
+        
+        const resp = await fetch(`${PP_BRIDGE_URL}/api/pp/public-deposit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount }),
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json();
+          throw new Error(err.error || "Public deposit failed");
+        }
+
+        const data = await resp.json();
+        
+        if (statusEl) statusEl.innerHTML = `<div class="flow-log-line"><i class="flow-log-icon green" data-lucide="check-circle-2"></i> <span>Direct transfer transaction confirmed.</span></div>`;
+
+        // Add transaction record
+        this.model.addTransaction({
+          type: "ETH",
+          hash: data.txHash.slice(0, 10) + "..." + data.txHash.slice(-6),
+          method: "Public Escrow Fund",
+          amount: `${amount} ETH`,
+          status: "Released", 
+          date: "Just now",
+        });
+
+        // Trigger visual arc on globe & update project escrow balance in UI
+        this.model.adjustEscrowBalance(this.model.state.activeProjectId, 0, parseFloat(amount));
+        if (this.onArcTrigger) {
+          this.onArcTrigger(this.model.projects[this.model.state.activeProjectId]);
+        }
+
+        if (statusEl) statusEl.innerHTML = `<div class="flow-log-line"><i class="flow-log-icon green" data-lucide="check-circle-2"></i> <span>Deposit successful. Balance updated!</span></div>`;
+        this.logLocal("system", `[Bridge] ✅ Public deposit direct tx settled (${data.mode}). Hash: ${data.txHash}`, "system");
+
+        // Refresh status
+        this.checkPPBridgeStatus();
+      } catch (err) {
+        console.error("[VM] Public deposit error:", err);
+        this.logLocal("system", `[Bridge] Public deposit error: ${err.message}. Using simulated fallback.`, "system");
+        this._executePublicDepositSimulated(amount, statusEl);
+      }
+    } else {
+      this._executePublicDepositSimulated(amount, statusEl);
+    }
+    
+    if (btnEl) btnEl.disabled = false;
+  }
+
+  _executePublicDepositSimulated(amount, statusEl) {
+    if (statusEl) statusEl.innerHTML = `<div class="flow-log-line"><i class="flow-log-icon blue animate-spin" data-lucide="loader"></i> <span>Simulating public deposit of ${amount} ETH...</span></div>`;
+    lucide.createIcons();
+
+    setTimeout(() => {
+      const mockTxHash = "0x" + Math.random().toString(16).substring(2, 12) + "..." + Math.random().toString(16).substring(2, 8);
+      
+      this.model.addTransaction({
+        type: "ETH",
+        hash: mockTxHash,
+        method: "Public Escrow Fund",
+        amount: `${amount} ETH`,
+        status: "Released",
+        date: "Just now",
+      });
+
+      this.model.adjustEscrowBalance(this.model.state.activeProjectId, 0, parseFloat(amount));
+      if (this.onArcTrigger) {
+        this.onArcTrigger(this.model.projects[this.model.state.activeProjectId]);
+      }
+
+      if (statusEl) statusEl.innerHTML = `<div class="flow-log-line"><i class="flow-log-icon green" data-lucide="check-circle-2"></i> <span>Deposit successful (Simulated). Balance updated!</span></div>`;
+      this.logLocal("system", `[Bridge] ✅ Public direct deposit simulated. Tx: ${mockTxHash}`, "system");
+      lucide.createIcons();
+    }, 1500);
+  }
+
   _executeDepositSimulated(amount) {
     this.model.updateDepositStatus("submitting");
     setTimeout(() => {
