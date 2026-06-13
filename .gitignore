@@ -1,0 +1,10 @@
+.npmrc
+node_modules/
+venv/
+__pycache__/
+*.log
+backend/devnet_keypair.json
+backend/data/
+pp-bridge/.env
+pp-bridge/node_modules/
+pp-bridge/.npmrc

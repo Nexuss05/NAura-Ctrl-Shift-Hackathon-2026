@@ -24,6 +24,8 @@ class NAuraView {
     this.inspectorNdviTarget = document.getElementById("inspector-ndvi-target");
     this.inspectorEscrowBalance = document.getElementById("inspector-escrow-balance");
     this.inspectorReleasedAmount = document.getElementById("inspector-released-amount");
+    this.inspectorSlopeAngle = document.getElementById("inspector-slope-angle");
+    this.inspectorLandslideRisk = document.getElementById("inspector-landslide-risk");
     
     this.ndviProgressBar = document.getElementById("ndvi-progress-bar");
     this.ndviProgressVal = document.getElementById("ndvi-progress-val");
@@ -314,6 +316,10 @@ class NAuraView {
       this.inspectorNdviTarget.innerText = activeProj.ndviTarget.toFixed(2);
       this.inspectorEscrowBalance.innerText = `${activeProj.escrowBalance.toFixed(2)} ETH`;
       this.inspectorReleasedAmount.innerText = `${activeProj.releasedAmount.toFixed(2)} ETH`;
+      
+      this.inspectorSlopeAngle.innerText = `${activeProj.slopeAngle}°`;
+      const currentRisk = Math.max(0, activeProj.slopeAngle * (1.0 - activeProj.ndviCurrent) * 2.2215);
+      this.inspectorLandslideRisk.innerText = `${currentRisk.toFixed(1)}%`;
       
       this.satelliteBeforeImg.src = activeProj.beforeImage;
       this.satelliteAfterImg.src = activeProj.afterImage;

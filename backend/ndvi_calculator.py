@@ -78,7 +78,15 @@ class NdviCalculator:
         ndvi_matrix = (nir_synthetic - red_synthetic) / (nir_synthetic + red_synthetic + 1e-10)
         mean_ndvi = float(np.mean(ndvi_matrix))
         
-        return mean_ndvi
+    def calculate_landslide_risk(self, ndvi: float, slope_angle: float) -> float:
+        """
+        Calcola l'indice di rischio di frana probabilistico (Landslide Risk Index).
+        Un NDVI elevato indica vegetazione fitta che stabilizza il terreno con le radici, riducendo il rischio.
+        Una pendenza (slope_angle) elevata aumenta proporzionalmente il rischio geologico.
+        Formula normalizzata in percentuale.
+        """
+        risk_factor = slope_angle * (1.0 - ndvi) * 2.2215
+        return float(max(0.0, min(100.0, risk_factor)))
 
 
 if __name__ == "__main__":
