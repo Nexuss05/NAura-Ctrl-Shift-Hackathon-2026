@@ -19,6 +19,7 @@ export default function App() {
   const [amount, setAmount] = useState(1);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [supported, setSupported] = useState({}); // forestId -> { given, healthAtJoin }
 
   const globeRef = useRef(null);
   const galleryRef = useRef(null);
@@ -45,7 +46,11 @@ export default function App() {
     await wait(900);
     if (!custom) {
       setForests((prev) => prev.map((f) => (f.id === target.id ? { ...f, setAside: f.setAside + amount } : f)));
-      setMessage(`Thank you. <strong>${fmt(amount)} ETH</strong> is now set aside for ${target.name}. It will only be released when satellites prove new growth.`);
+      setSupported((prev) => {
+        const ex = prev[target.id];
+        return { ...prev, [target.id]: { given: (ex?.given || 0) + amount, healthAtJoin: ex?.healthAtJoin ?? target.health } };
+      });
+      setMessage(""); // confirmation now lives in the Step 4 "locked safely" block
     } else {
       setMessage(`Thank you. <strong>${fmt(amount)} ETH</strong> is pledged for a new project at ${target.lat.toFixed(2)}°, ${target.lng.toFixed(2)}°. Our team will plan the planting.`);
     }
@@ -89,6 +94,7 @@ export default function App() {
           <ForestGallery
             forests={forests}
             selectedId={custom ? null : selectedId}
+            supported={supported}
             onSelect={selectForest}
           />
         </div>
@@ -113,6 +119,7 @@ export default function App() {
             <FundingPanel
               target={target} amount={amount} setAmount={setAmount}
               onFund={onFund} onCheck={onCheck} busy={busy} message={message}
+              impact={!custom ? supported[selectedId] : undefined}
             />
           </div>
         </section>

@@ -19,7 +19,7 @@ const P = {
 };
 
 export const FORESTS = [
-  { id: "maremma",  name: "Maremma Woodland",   place: "Tuscany — Italy",        flag: "Italy",      lat: 42.716, lng: 11.114,  health: 38, target: 52, setAside: 15,  paid: 0,    hue: 150, photo: U(P.misty),     story: "Old mining land brought back to life with native Mediterranean trees, planted by local hands." },
+  { id: "maremma",  name: "Maremma Woodland",   place: "Colline Metallifere, Tuscany — Italy", flag: "Italy", lat: 42.92, lng: 10.92, health: 38, target: 52, setAside: 15,  paid: 0,    hue: 150, photo: U(P.misty),     story: "Old mining land in the Colline Metallifere brought back to life with native Mediterranean trees, planted by local hands." },
   { id: "mau",      name: "Mau Forest",         place: "Rift Valley — Kenya",    flag: "Kenya",      lat: -0.633, lng: 35.833,  health: 48, target: 55, setAside: 45,  paid: 12.5, hue: 130, photo: U(P.sunbeams),  story: "Replanting a vital water forest, led by the communities who depend on the rivers it feeds." },
   { id: "xingu",    name: "Xingu River Forest", place: "Mato Grosso — Brazil",   flag: "Brazil",     lat: -11.524, lng: -53.189, health: 51, target: 60, setAside: 120, paid: 40,   hue: 160, photo: U(P.canopy),    story: "Reconnecting broken patches of Amazon rainforest so wildlife can move freely again." },
   { id: "borneo",   name: "Borneo Lowland",     place: "Kalimantan — Indonesia", flag: "Indonesia",  lat: 0.96,   lng: 114.55,  health: 44, target: 58, setAside: 80,  paid: 18,   hue: 145, photo: U(P.sunforest), story: "Restoring tropical lowland rainforest and peatland that shelters orangutans and hornbills." },
@@ -35,6 +35,18 @@ export const FORESTS = [
 
 export const goalProgress = (f) => Math.min(100, Math.round((f.health / f.target) * 100));
 export const fmt = (n) => Number(n).toFixed(2);
+
+// Everything the donor sees scales with the ETH amount they choose.
+export const impactOf = (amount, f) => {
+  const a = Math.max(0, amount);
+  const trees = Math.round(a * 120);             // ~120 trees per ETH
+  const hectares = Math.round(a * 8) / 10;       // ~0.8 hectare per ETH
+  const points = f ? Math.min(f.target - f.health, Math.round(a * 1.5)) : Math.round(a * 1.5);
+  const projHealth = f ? Math.min(f.target, f.health + points) : null;
+  return { trees, hectares, points, projHealth };
+};
+// Visual strength of the "restored" projection, 0.25 → 1, driven by the gift size.
+export const projIntensity = (amount) => Math.min(1, 0.25 + (Math.max(0, amount) / 8) * 0.75);
 export const photoFor = (f, w = 1200) => {
   // re-fetch at a chosen width by swapping the w= param
   return f.photo.replace(/w=\d+/, `w=${w}`);

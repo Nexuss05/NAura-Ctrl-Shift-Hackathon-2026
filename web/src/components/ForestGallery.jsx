@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
 import { goalProgress, photoFor } from "../data.js";
-import { Pin } from "../Icons.jsx";
+import { Pin, Check } from "../Icons.jsx";
 
-export default function ForestGallery({ forests, selectedId, onSelect }) {
+export default function ForestGallery({ forests, selectedId, supported = {}, onSelect }) {
   return (
     <section className="section" id="forests" style={{ paddingTop: 0 }}>
       <div className="wrap">
@@ -26,6 +26,7 @@ export default function ForestGallery({ forests, selectedId, onSelect }) {
             >
               <img src={photoFor(f, 700)} alt={`Aerial view of ${f.name}.`} loading="lazy" />
               <span className="fcard-flag">{f.flag}</span>
+              {supported[f.id] && <span className="fcard-supported"><Check /> You support this</span>}
               <span className="fcard-body">
                 <h3>{f.name}</h3>
                 <span className="fcard-loc"><Pin /> {f.place}</span>

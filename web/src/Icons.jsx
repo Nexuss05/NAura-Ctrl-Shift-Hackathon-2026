@@ -20,3 +20,4 @@ export const Hand = make(<><path d="M11 14h2a2 2 0 0 0 2-2v0a2 2 0 0 0-2-2H9.5a3
 export const GripH = make(<><path d="m9 7-5 5 5 5"/><path d="m15 7 5 5-5 5"/></>);
 export const Cursor = make(<><path d="m4 4 7.07 17 2.51-7.39L21 11.07Z"/></>);
 export const ChevronDown = make(<path d="m6 9 6 6 6-6"/>);
+export const Sparkle = make(<><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><path d="M12 7a5 5 0 0 0 5 5 5 5 0 0 0-5 5 5 5 0 0 0-5-5 5 5 0 0 0 5-5Z"/></>);
