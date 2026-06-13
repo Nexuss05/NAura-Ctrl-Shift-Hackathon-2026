@@ -1,7 +1,7 @@
-// VERDANT — MVVM View Layer
+// NAura — MVVM View Layer
 // Gestione DOM, rendering e binding eventi utente
 
-class VerdantView {
+class NAuraView {
   constructor(model, viewModel) {
     this.model = model;
     this.viewModel = viewModel;

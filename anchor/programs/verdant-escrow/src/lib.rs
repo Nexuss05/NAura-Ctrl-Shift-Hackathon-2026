@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 
-declare_id!("Verdant111111111111111111111111111111111111");
+declare_id!("NAura1111111111111111111111111111111111111");
 
 #[program]
-pub mod verdant_escrow {
+pub mod naura_escrow {
     use super::*;
 
     /// Inizializza l'account di Escrow associato ad un progetto di riforestazione.

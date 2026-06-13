@@ -3,10 +3,10 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-verdant_escrow = "Verdant111111111111111111111111111111111111"
+naura_escrow = "NAura1111111111111111111111111111111111111"
 
 [programs.devnet]
-verdant_escrow = "Verdant111111111111111111111111111111111111"
+naura_escrow = "NAura1111111111111111111111111111111111111"
 
 [registry]
 url = "https://api.apr.dev"

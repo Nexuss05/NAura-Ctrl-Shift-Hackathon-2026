@@ -7,7 +7,7 @@ import uvicorn
 from ndvi_calculator import NdviCalculator
 from treasurer_agent import TreasurerAgent
 
-app = FastAPI(title="VERDANT Swarm Orchestrator")
+app = FastAPI(title="NAura Swarm Orchestrator")
 
 # Abilita CORS
 app.add_middleware(
@@ -146,7 +146,7 @@ async def websocket_events(websocket: WebSocket):
 
 @app.get("/")
 def read_root():
-    return {"status": "VERDANT Swarm API online"}
+    return {"status": "NAura Swarm API online"}
 
 
 if __name__ == "__main__":

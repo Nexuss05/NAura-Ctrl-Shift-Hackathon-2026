@@ -1,7 +1,7 @@
-// VERDANT — MVVM ViewModel Layer
+// NAura — MVVM ViewModel Layer
 // Coordinamento azioni UI, logica di business e connessione WebSocket con l'agente Python
 
-class VerdantViewModel {
+class NAuraViewModel {
   constructor(model) {
     this.model = model;
     this.ws = null;

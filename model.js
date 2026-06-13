@@ -1,4 +1,4 @@
-// VERDANT — MVVM Model Layer
+// NAura — MVVM Model Layer
 // Gestione dati, strutture dei progetti e stato applicativo globale
 
 const PROJECTS_DATA = {
@@ -49,7 +49,7 @@ const PROJECTS_DATA = {
   }
 };
 
-class VerdantModel {
+class NAuraModel {
   constructor() {
     this.projects = JSON.parse(JSON.stringify(PROJECTS_DATA)); // Deep clone
     this.state = {
