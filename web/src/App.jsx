@@ -109,7 +109,7 @@ export default function App() {
         </section>
 
         <section className="section" style={{ paddingTop: 0 }}>
-          <div className="wrap" ref={panelRef} style={{ scrollMarginTop: "90px" }}>
+          <div className="wrap" ref={panelRef} style={{ scrollMarginTop: "104px" }}>
             <FundingPanel
               target={target} amount={amount} setAmount={setAmount}
               onFund={onFund} onCheck={onCheck} busy={busy} message={message}

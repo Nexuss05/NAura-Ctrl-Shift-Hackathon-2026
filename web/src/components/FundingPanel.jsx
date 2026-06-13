@@ -1,29 +1,9 @@
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { goalProgress, fmt, photoFor } from "../data.js";
-import { GripH, Coins, Eye, Check, Pin } from "../Icons.jsx";
+import { goalProgress, fmt } from "../data.js";
+import { Coins, Eye, Check, Pin } from "../Icons.jsx";
+import SatelliteCompare from "./SatelliteCompare.jsx";
 
 const CHIPS = [0.5, 1, 2.5, 5];
-
-// Photo before/after: "before" is the same aerial photo desaturated/dried out.
-function Compare({ photo, name }) {
-  const [v, setV] = useState(50);
-  return (
-    <div className="compare">
-      <img className="compare-img compare-before" src={photo} alt={`Before restoration at ${name}: dry, bare land.`} />
-      <img className="compare-img compare-after" src={photo} alt={`After restoration at ${name}: healthy green forest.`}
-           style={{ clipPath: `inset(0 0 0 ${v}%)` }} />
-      <span className="compare-tag before">Before</span>
-      <span className="compare-tag after">Now</span>
-      <div className="compare-handle" style={{ left: `${v}%` }}>
-        <div className="compare-grip"><GripH /></div>
-      </div>
-      <input type="range" min="0" max="100" value={v}
-             onChange={(e) => setV(+e.target.value)}
-             aria-label="Drag to compare the land before and now" />
-    </div>
-  );
-}
 
 export default function FundingPanel({ target, amount, setAmount, onFund, onCheck, busy, message }) {
   if (!target) return null;
@@ -33,20 +13,12 @@ export default function FundingPanel({ target, amount, setAmount, onFund, onChec
     <motion.article className="panel" tabIndex={-1} aria-live="polite"
       initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <div className="panel-grid">
-        {isForest ? (
-          <Compare photo={photoFor(target, 1000)} name={target.name} />
-        ) : (
-          <div className="compare" style={{ display: "grid", placeItems: "center", color: "#fff", textAlign: "center", padding: "2rem" }}>
-            <div>
-              <Pin />
-              <h3 style={{ color: "#fff", marginTop: "1rem" }}>A new place to protect</h3>
-              <p style={{ color: "var(--green-200)", margin: 0 }}>
-                {target.lat.toFixed(2)}°, {target.lng.toFixed(2)}°<br />
-                Pledge here and our team will plan a forest for this land.
-              </p>
-            </div>
-          </div>
-        )}
+        <div className="sat-col">
+          <SatelliteCompare key={target.id || `${target.lat},${target.lng}`} lat={target.lat} lng={target.lng} />
+          <p className="sat-caption">
+            Real Sentinel-2 satellite imagery — drag to compare 2017 with 2024.
+          </p>
+        </div>
 
         <div className="panel-info">
           <h2>{isForest ? target.name : "Protect a new area"}</h2>
