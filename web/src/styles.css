@@ -246,6 +246,22 @@ a{color:inherit}
 .preview-note{margin:.15rem 0 1rem;padding:1rem 1.15rem;border-radius:var(--radius-sm);
   background:#F2FAE4;border:1px solid var(--lime-500);font-size:1rem;color:var(--green-800)}
 .preview-note strong{color:var(--green-900)}
+
+/* Privacy layer toggle (Privacy Pools) */
+.privacy-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  margin:.25rem 0 1rem;padding:.95rem 1.1rem;border-radius:var(--radius-sm);
+  background:#F2FAE4;border:1px solid var(--lime-500)}
+.privacy-text{display:flex;flex-direction:column;gap:.2rem}
+.privacy-title{display:flex;align-items:center;gap:.45rem;font-weight:700;color:var(--green-900);font-size:1rem}
+.privacy-title svg{width:18px;height:18px;color:var(--green-600);flex:none}
+.privacy-sub{font-size:.9rem;color:var(--text-soft);line-height:1.4}
+.switch{flex:none;position:relative;width:56px;height:32px;padding:0;border-radius:var(--pill);
+  border:1px solid var(--green-200);background:var(--green-100);cursor:pointer;
+  transition:background .2s ease,border-color .2s ease}
+.switch .switch-knob{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .2s ease}
+.switch.on{background:var(--green-600);border-color:var(--green-600)}
+.switch.on .switch-knob{transform:translateX(24px)}
 .step3{margin-top:.5rem}
 .after-pledge{margin-top:1.25rem;padding:1.25rem;border-radius:var(--radius-sm);
   background:var(--green-50);border:1px solid var(--green-200)}

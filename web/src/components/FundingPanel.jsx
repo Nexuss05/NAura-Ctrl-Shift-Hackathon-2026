@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { goalProgress, fmt, impactOf, projIntensity } from "../data.js";
-import { Coins, Eye, Check, Pin, Leaf } from "../Icons.jsx";
+import { Coins, Eye, Check, Pin, Leaf, Shield } from "../Icons.jsx";
 import SatelliteCompare from "./SatelliteCompare.jsx";
 
 const CHIPS = [0.5, 1, 2.5, 5];
 
 export default function FundingPanel({ target, amount, setAmount, onFund, onCheck, busy, message, impact }) {
   const [preview, setPreview] = useState(false);
+  const [privacy, setPrivacy] = useState(false);
   const isForest = target ? !target.custom : false;
   const key = target ? (target.id || `${target.lat},${target.lng}`) : "none";
 
@@ -63,9 +64,9 @@ export default function FundingPanel({ target, amount, setAmount, onFund, onChec
             </div>
           )}
 
-          {/* STEP 1 — choose the gift */}
+          {/* Choose the gift */}
           <div className="fund">
-            <span className="step-tag">Step 1 · Choose your gift</span>
+            <span className="step-tag">Choose your gift</span>
             <div className="fund-label">
               <label htmlFor="amount">How much would you like to give?</label>
               <b>{fmt(amount)} <span style={{ fontSize: "1rem" }}>ETH</span></b>
@@ -82,11 +83,27 @@ export default function FundingPanel({ target, amount, setAmount, onFund, onChec
             </p>
           </div>
 
-          {/* STEP 2 — preview the growth this gift creates */}
+          {/* Privacy layer toggle — Privacy Pools (wired to backend later) */}
+          <div className="privacy-row">
+            <div className="privacy-text">
+              <span className="privacy-title"><Shield /> Give privately</span>
+              <span className="privacy-sub">
+                Hide your identity with Privacy Pools. Your gift still counts and stays fully verified — just anonymous.
+              </span>
+            </div>
+            <button type="button" role="switch" aria-checked={privacy}
+                    aria-label="Give privately"
+                    className={`switch${privacy ? " on" : ""}`}
+                    onClick={() => setPrivacy((p) => !p)}>
+              <span className="switch-knob" />
+            </button>
+          </div>
+
+          {/* Preview the growth this gift creates */}
           {isForest && (
             <button className={`btn btn-outline btn-block step-btn${preview ? " active" : ""}`}
                     aria-pressed={preview} onClick={() => setPreview((p) => !p)}>
-              <Eye /> {preview ? "Hide the preview" : "Step 2 · Preview the growth your gift creates"}
+              <Eye /> {preview ? "Hide the preview" : "Preview the growth your gift creates"}
             </button>
           )}
           <AnimatePresence>
@@ -100,9 +117,9 @@ export default function FundingPanel({ target, amount, setAmount, onFund, onChec
             )}
           </AnimatePresence>
 
-          {/* STEP 3 — pledge */}
+          {/* Pledge */}
           <button className="btn btn-lime btn-block step3" onClick={onFund} disabled={busy}>
-            <Coins /> Step 3 · Pledge {fmt(amount)} ETH
+            <Coins /> Pledge {fmt(amount)} ETH{privacy ? " privately" : ""}
           </button>
 
           {/* STEP 4 — appears only after pledging, so the order is unmistakable */}
@@ -117,7 +134,7 @@ export default function FundingPanel({ target, amount, setAmount, onFund, onChec
                   {gained > 0 && <> Since you joined, its health has grown <strong>+{gained} points</strong>.</>}
                 </p>
                 <button className="btn btn-ghost btn-block" onClick={onCheck} disabled={busy}>
-                  <Eye /> Step 4 · Verify growth from space
+                  <Eye /> Verify growth from space
                 </button>
               </motion.div>
             )}
