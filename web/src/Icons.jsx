@@ -19,3 +19,4 @@ export const Coins = make(<><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6
 export const Hand = make(<><path d="M11 14h2a2 2 0 0 0 2-2v0a2 2 0 0 0-2-2H9.5a3.5 3.5 0 0 0 0 7H13"/><path d="M12 2v20"/></>);
 export const GripH = make(<><path d="m9 7-5 5 5 5"/><path d="m15 7 5 5-5 5"/></>);
 export const Cursor = make(<><path d="m4 4 7.07 17 2.51-7.39L21 11.07Z"/></>);
+export const ChevronDown = make(<path d="m6 9 6 6 6-6"/>);

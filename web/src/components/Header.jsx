@@ -1,18 +1,34 @@
+import { useEffect, useState } from "react";
 import { Leaf } from "../Icons.jsx";
 
-export default function Header() {
+const LINKS = [
+  { href: "#how", label: "How it works" },
+  { href: "#forests", label: "Forests" },
+  { href: "#globe", label: "Map" },
+  { href: "#trust", label: "Trust" }
+];
+
+export default function Header({ onSignIn }) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className="site-header">
-      <div className="wrap">
-        <div className="brand">
+    <nav className={`nav${scrolled ? " scrolled" : ""}`} aria-label="Main">
+      <div className="nav-inner">
+        <a className="brand" href="#main" aria-label="NAura home">
           <span className="brand-mark"><Leaf /></span>
-          <span className="brand-text">
-            <strong>NAura</strong>
-            <span>Proof you can see</span>
-          </span>
+          <strong>NAura</strong>
+        </a>
+        <div className="nav-links">
+          {LINKS.map((l) => <a key={l.href} href={l.href}>{l.label}</a>)}
         </div>
-        <p className="lang-status"><span className="dot" aria-hidden="true" /> Live &amp; verified</p>
+        <button className="nav-cta" onClick={onSignIn}>Start planting</button>
       </div>
-    </header>
+    </nav>
   );
 }

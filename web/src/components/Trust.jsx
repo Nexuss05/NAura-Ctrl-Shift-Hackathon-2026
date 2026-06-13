@@ -8,7 +8,7 @@ const ITEMS = [
 
 export default function Trust() {
   return (
-    <section className="trust">
+    <section className="trust" id="trust">
       <div className="wrap">
         <div className="trust-grid">
           {ITEMS.map(({ Icon, title, text }) => (

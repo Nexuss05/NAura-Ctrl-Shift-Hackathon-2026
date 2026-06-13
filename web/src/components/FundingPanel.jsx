@@ -1,25 +1,26 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { scene, goalProgress, fmt } from "../data.js";
+import { goalProgress, fmt, photoFor } from "../data.js";
 import { GripH, Coins, Eye, Check, Pin } from "../Icons.jsx";
 
 const CHIPS = [0.5, 1, 2.5, 5];
 
-function Compare({ hue, name }) {
+// Photo before/after: "before" is the same aerial photo desaturated/dried out.
+function Compare({ photo, name }) {
   const [v, setV] = useState(50);
   return (
     <div className="compare">
-      <img className="compare-img" src={scene(hue, false)} alt={`Before: sparse, damaged land at ${name}.`} />
-      <img className="compare-img" src={scene(hue, true)} alt={`After: recovered green forest at ${name}.`}
+      <img className="compare-img compare-before" src={photo} alt={`Before restoration at ${name}: dry, bare land.`} />
+      <img className="compare-img compare-after" src={photo} alt={`After restoration at ${name}: healthy green forest.`}
            style={{ clipPath: `inset(0 0 0 ${v}%)` }} />
       <span className="compare-tag before">Before</span>
       <span className="compare-tag after">Now</span>
       <div className="compare-handle" style={{ left: `${v}%` }}>
-        <div className="compare-grip" style={{ top: "50%", left: "50%" }}><GripH /></div>
+        <div className="compare-grip"><GripH /></div>
       </div>
       <input type="range" min="0" max="100" value={v}
              onChange={(e) => setV(+e.target.value)}
-             aria-label="Drag to compare the forest before and now" />
+             aria-label="Drag to compare the land before and now" />
     </div>
   );
 }
@@ -29,17 +30,11 @@ export default function FundingPanel({ target, amount, setAmount, onFund, onChec
   const isForest = !target.custom;
 
   return (
-    <motion.article
-      className="panel"
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      tabIndex={-1}
-      aria-live="polite"
-    >
+    <motion.article className="panel" tabIndex={-1} aria-live="polite"
+      initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <div className="panel-grid">
         {isForest ? (
-          <Compare hue={target.hue} name={target.name} />
+          <Compare photo={photoFor(target, 1000)} name={target.name} />
         ) : (
           <div className="compare" style={{ display: "grid", placeItems: "center", color: "#fff", textAlign: "center", padding: "2rem" }}>
             <div>
@@ -55,7 +50,7 @@ export default function FundingPanel({ target, amount, setAmount, onFund, onChec
 
         <div className="panel-info">
           <h2>{isForest ? target.name : "Protect a new area"}</h2>
-          <p className="panel-loc">{isForest ? target.place : `${target.lat.toFixed(2)}° , ${target.lng.toFixed(2)}°`}</p>
+          <p className="panel-loc"><Pin /> {isForest ? target.place : `${target.lat.toFixed(2)}° , ${target.lng.toFixed(2)}°`}</p>
           <p className="desc">
             {isForest ? target.story : "You picked a spot on the map. Your pledge starts a brand-new restoration project here, watched by satellites just like the others."}
           </p>
@@ -77,7 +72,6 @@ export default function FundingPanel({ target, amount, setAmount, onFund, onChec
             </div>
           )}
 
-          {/* Amount chooser */}
           <div className="fund">
             <div className="fund-label">
               <label htmlFor="amount" style={{ fontWeight: 600 }}>How much would you like to give?</label>
@@ -87,19 +81,17 @@ export default function FundingPanel({ target, amount, setAmount, onFund, onChec
                    value={amount} onChange={(e) => setAmount(+e.target.value)} />
             <div className="chips">
               {CHIPS.map((c) => (
-                <button key={c} className="chip" aria-pressed={amount === c}
-                        onClick={() => setAmount(c)}>{c} ETH</button>
+                <button key={c} className="chip" aria-pressed={amount === c} onClick={() => setAmount(c)}>{c} ETH</button>
               ))}
             </div>
           </div>
 
-          <button className="btn btn-primary" onClick={onFund} disabled={busy}>
+          <button className="btn btn-lime btn-block" onClick={onFund} disabled={busy}>
             <Coins /> Pledge {fmt(amount)} ETH to this forest
           </button>
 
           {isForest && (
-            <button className="btn btn-ghost" style={{ width: "100%", marginTop: "0.75rem" }}
-                    onClick={onCheck} disabled={busy}>
+            <button className="btn btn-ghost btn-block" style={{ marginTop: "0.75rem" }} onClick={onCheck} disabled={busy}>
               <Eye /> Check growth from space now
             </button>
           )}
@@ -107,9 +99,7 @@ export default function FundingPanel({ target, amount, setAmount, onFund, onChec
           <AnimatePresence>
             {message && (
               <motion.p className="live-msg" role="status"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}>
+                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
                 <Check /> <span dangerouslySetInnerHTML={{ __html: message }} />
               </motion.p>
             )}
