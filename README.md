@@ -92,7 +92,47 @@ To run the real Python agent swarm, raster calculations, and real Solana devnet 
 
 To build the Rust contract program:
 
-1. Install Solana CLI & Anchor.
+1. **Install Rust, Solana CLI & Anchor CLI (Isolated Local Setup)**:
+   Run the following commands in the project root to install everything inside `.rustup`, `.cargo`, `.avm`, and `.solana` folders (easily deletable once the hackathon is over):
+   
+   ```bash
+   # 1. Define local directories
+   export RUSTUP_HOME="$(pwd)/.rustup"
+   export CARGO_HOME="$(pwd)/.cargo"
+   export AVM_HOME="$(pwd)/.avm"
+
+   # 2. Install Rust locally (without modifying global PATH)
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+   source "$CARGO_HOME/env"
+
+   # 3. Download and unpack Solana CLI locally
+   if [ "$(uname -m)" = "arm64" ]; then
+     curl -sSfL https://release.anza.xyz/stable/solana-release-aarch64-apple-darwin.tar.bz2 -o solana.tar.bz2
+   else
+     curl -sSfL https://release.anza.xyz/stable/solana-release-x86_64-apple-darwin.tar.bz2 -o solana.tar.bz2
+   fi
+   mkdir -p .solana
+   tar -jxf solana.tar.bz2 -C .solana --strip-components 1
+   rm solana.tar.bz2
+
+   # 4. Set current terminal session PATH
+   export PATH="$(pwd)/.cargo/bin:$(pwd)/.solana/bin:$(pwd)/.avm/bin:$PATH"
+
+   # 5. Install AVM and Anchor CLI locally
+   cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+   avm install latest
+   avm use latest
+   ```
+   
+   *Note: Every time you open a new terminal window to build or deploy, run this command to restore paths:*
+   ```bash
+   export RUSTUP_HOME="$(pwd)/.rustup"
+   export CARGO_HOME="$(pwd)/.cargo"
+   export AVM_HOME="$(pwd)/.avm"
+   source "$CARGO_HOME/env"
+   export PATH="$(pwd)/.cargo/bin:$(pwd)/.solana/bin:$(pwd)/.avm/bin:$PATH"
+   ```
+
 2. Inside `/anchor` directory:
    ```bash
    anchor build

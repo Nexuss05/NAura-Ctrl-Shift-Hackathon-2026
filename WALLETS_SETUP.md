@@ -22,6 +22,7 @@ The Privacy Pools v2 SDK is hosted on GitHub Packages. A pre-configured `.npmrc`
 To install dependencies and prepare the server, execute:
 ```bash
 # Run the automated setup helper script
+chmod +x setup-pp-bridge.sh
 ./setup-pp-bridge.sh
 ```
 Or run it manually:
@@ -64,10 +65,33 @@ Since Privacy Pools v2 is deployed on the **Ethereum Sepolia Testnet (Chain ID 1
 The bridge communicates with the Sepolia blockchain using an RPC node. The default configuration uses the public endpoint:
 `https://rpc.sepolia.org`
 
-To avoid rate limits and connection issues during live demos, configure a private RPC endpoint from Alchemy, QuickNode, or Infura in `pp-bridge/.env`:
+To avoid rate limits and connection issues during live demos, configure a private RPC endpoint in `pp-bridge/.env`:
 ```env
 SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY
 ```
+
+#### How to get a private RPC API Key:
+
+##### Option A: Alchemy (Recommended)
+1. Go to [alchemy.com](https://www.alchemy.com) and sign up for a free developer account.
+2. Inside the dashboard, click the **"Create App"** button (top right).
+3. Configure your app as follows:
+   * **Name**: `NAura Demo` (or any custom name)
+   * **Chain**: Select **Ethereum**
+   * **Network**: Select **Sepolia** (crucial to select Sepolia testnet instead of Mainnet)
+4. Click **"Create App"**.
+5. Click on your newly created app, then click the **"API Key"** button (top right).
+6. Copy the entire link under **"HTTPS"** (e.g., `https://eth-sepolia.g.alchemy.com/v2/your-api-key-here`).
+7. Paste this URL into the `SEPOLIA_RPC_URL` variable in `pp-bridge/.env`.
+
+##### Option B: Infura
+1. Go to [infura.io](https://www.infura.io) and register for a free account.
+2. In the dashboard, click **"Create New Key"** (top right).
+3. Select network type **"Web3 API"**, choose a name, and click **"Create"**.
+4. Inside the key details, scroll down to the **"Endpoints"** section.
+5. In the dropdown menu, select **"Sepolia"**.
+6. Copy the URL generated for Sepolia (e.g., `https://sepolia.infura.io/v3/your-api-key-here`).
+7. Paste this URL into the `SEPOLIA_RPC_URL` variable in `pp-bridge/.env`.
 
 ---
 
@@ -89,8 +113,16 @@ The Solana program that receives the corresponding release signals from the agen
     *   Python swarm configuration (`treasurer_agent.py`)
 
 2.  **Deploy it yourself on Devnet**:
-    If you want to deploy a fresh instance of the Solana escrow contract:
+    If you want to deploy a fresh instance of the Solana escrow contract, ensure you have initialized your terminal session with the local paths (defined in the README.md setup):
     ```bash
+    # Set the local paths for the active terminal session
+    export RUSTUP_HOME="$(pwd)/.rustup"
+    export CARGO_HOME="$(pwd)/.cargo"
+    export AVM_HOME="$(pwd)/.avm"
+    source "$CARGO_HOME/env"
+    export PATH="$(pwd)/.cargo/bin:$(pwd)/.solana/bin:$(pwd)/.avm/bin:$PATH"
+
+    # Compile and deploy
     cd anchor
     anchor build
     anchor deploy --provider.cluster devnet

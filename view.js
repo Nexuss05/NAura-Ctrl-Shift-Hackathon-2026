@@ -395,7 +395,9 @@ class NAuraView {
         if (note.status === "ACTIVE") {
           const opt = document.createElement("option");
           opt.value = index;
-          opt.innerText = `${note.value.toFixed(3)} ETH (Commitment: ${note.commitment.substring(0, 10)}...)`;
+          const noteVal = Number(note.value) || 0;
+          const commitmentStr = note.commitment ? String(note.commitment) : "";
+          opt.innerText = `${noteVal.toFixed(3)} ETH (Commitment: ${commitmentStr.substring(0, 10)}...)`;
           this.selectTransferNote.appendChild(opt);
         }
       });
