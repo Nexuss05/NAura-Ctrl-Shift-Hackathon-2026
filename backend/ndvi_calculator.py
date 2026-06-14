@@ -77,7 +77,8 @@ class NdviCalculator:
         # Applica formula NDVI reale sugli array numpy generati
         ndvi_matrix = (nir_synthetic - red_synthetic) / (nir_synthetic + red_synthetic + 1e-10)
         mean_ndvi = float(np.mean(ndvi_matrix))
-        
+        return mean_ndvi
+
     def calculate_landslide_risk(self, ndvi: float, slope_angle: float) -> float:
         """
         Calcola l'indice di rischio di frana probabilistico (Landslide Risk Index).

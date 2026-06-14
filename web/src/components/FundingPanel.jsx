@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { goalProgress, fmt, impactOf, projIntensity } from "../data.js";
 import { Coins, Eye, Check, Pin, Leaf, Shield } from "../Icons.jsx";
 import SatelliteCompare from "./SatelliteCompare.jsx";
+import SwarmConsole from "./SwarmConsole.jsx";
 
 const CHIPS = [0.5, 1, 2.5, 5];
 
-export default function FundingPanel({ target, amount, setAmount, onFund, onCheck, busy, message, impact }) {
+export default function FundingPanel({ target, amount, setAmount, onFund, onCheck, busy, message, impact,
+                                       privacy, setPrivacy, swarm }) {
   const [preview, setPreview] = useState(false);
-  const [privacy, setPrivacy] = useState(false);
   const isForest = target ? !target.custom : false;
   const key = target ? (target.id || `${target.lat},${target.lng}`) : "none";
 
@@ -136,6 +137,9 @@ export default function FundingPanel({ target, amount, setAmount, onFund, onChec
                 <button className="btn btn-ghost btn-block" onClick={onCheck} disabled={busy}>
                   <Eye /> Verify growth from space
                 </button>
+                {swarm && (swarm.logs.length > 0 || swarm.status !== "idle") && (
+                  <SwarmConsole logs={swarm.logs} status={swarm.status} ndvi={swarm.ndvi} />
+                )}
               </motion.div>
             )}
           </AnimatePresence>

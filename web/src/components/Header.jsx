@@ -19,10 +19,13 @@ function bgLuminanceAt(x, y) {
 
 const shortAddr = (a) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
-export default function Header() {
+export default function Header({ onAccount }) {
   const [behindDark, setBehindDark] = useState(false);
-  const [account, setAccount] = useState(null);
+  const [account, setAccountState] = useState(null);
   const [connecting, setConnecting] = useState(false);
+
+  // keep a single setter that also notifies the parent (App) of wallet changes
+  const setAccount = (a) => { setAccountState(a); onAccount?.(a); };
 
   // Dynamic contrast against whatever sits under the bar.
   useEffect(() => {

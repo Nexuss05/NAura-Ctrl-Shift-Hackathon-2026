@@ -33,6 +33,13 @@ try:
 
 except Exception:
     SOLANA_LIB_AVAILABLE = False
+    # Stubs so type annotations and references resolve in simulated mode.
+    Keypair = object
+    Client = None
+    Transaction = None
+    TransferParams = None
+    transfer = None
+    PublicKey = None
 
 class TreasurerAgent:
     """
@@ -42,8 +49,14 @@ class TreasurerAgent:
     
     def __init__(self, keypair_path: str = "backend/devnet_keypair.json"):
         self.rpc_url = "https://api.devnet.solana.com"
-        self.client = Client(self.rpc_url)
         self.keypair_path = keypair_path
+        if not SOLANA_LIB_AVAILABLE:
+            # Simulated mode: no Solana client/keypair, releases are stubbed.
+            self.client = None
+            self.keypair = None
+            print("[Treasurer Agent] Solana libs unavailable — running in SIMULATED mode.")
+            return
+        self.client = Client(self.rpc_url)
         self.keypair = self._load_or_create_keypair()
         
     def _load_or_create_keypair(self) -> Keypair:

@@ -272,6 +272,34 @@ main>.section:first-child{padding-top:clamp(6rem,11vw,7.5rem)}
 .vt-btn:hover{background:var(--green-50)}
 .vt-btn.active{background:var(--green-900);color:#fff}
 .view-stage{min-height:60vh}
+
+/* Swarm console — live satellite verification terminal */
+.swarm{margin-top:1rem;border-radius:var(--radius-sm);overflow:hidden;
+  background:var(--green-900);border:1px solid rgba(255,255,255,.1);box-shadow:var(--shadow)}
+.swarm-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;
+  padding:.7rem 1rem;background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.08)}
+.swarm-title{display:flex;align-items:center;gap:.5rem;color:#fff;font-weight:700;font-size:.95rem}
+.swarm-title svg{width:18px;height:18px;color:var(--lime-400)}
+.swarm-status{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  padding:.2rem .6rem;border-radius:var(--pill);background:rgba(255,255,255,.12);color:var(--green-100)}
+.swarm-status.s-running,.swarm-status.s-consensusing{background:var(--lime-500);color:var(--green-900)}
+.swarm-status.s-completed{background:var(--green-500);color:#fff}
+.swarm-body{max-height:280px;overflow-y:auto;padding:.85rem 1rem;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85rem;line-height:1.5}
+.swarm-empty{color:rgba(255,255,255,.55);margin:0}
+.swarm-line{margin:0 0 .5rem;display:flex;gap:.6rem;align-items:baseline;color:rgba(255,255,255,.9)}
+.swarm-tag{flex:none;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+  padding:.12rem .5rem;border-radius:6px;background:rgba(255,255,255,.12);color:#fff}
+.swarm-line.t-observer .swarm-tag{background:#3B82F6}
+.swarm-line.t-auditor .swarm-tag{background:#F59E0B;color:var(--green-900)}
+.swarm-line.t-treasurer .swarm-tag{background:var(--lime-500);color:var(--green-900)}
+.swarm-line.t-system .swarm-tag{background:rgba(255,255,255,.2)}
+.swarm-msg{word-break:break-word}
+.swarm-ndvi{padding:.6rem 1rem;background:rgba(163,230,53,.12);color:var(--green-100);
+  border-top:1px solid rgba(255,255,255,.08);font-size:.9rem}
+.swarm-ndvi strong{color:var(--lime-400)}
+.live-msg code,.swarm-msg code{font-family:ui-monospace,monospace;background:rgba(0,0,0,.25);
+  padding:.05rem .35rem;border-radius:5px}
 .step3{margin-top:.5rem}
 .after-pledge{margin-top:1.25rem;padding:1.25rem;border-radius:var(--radius-sm);
   background:var(--green-50);border:1px solid var(--green-200)}

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Header from "./components/Header.jsx";
 import ForestGallery from "./components/ForestGallery.jsx";
@@ -6,6 +6,8 @@ import GlobeSelector from "./components/GlobeSelector.jsx";
 import FundingPanel from "./components/FundingPanel.jsx";
 import { Globe, Leaf } from "./Icons.jsx";
 import { FORESTS, goalProgress, fmt } from "./data.js";
+import { bridge, bridgeReachable } from "./lib/bridge.js";
+import { useSwarm } from "./hooks/useSwarm.js";
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const smooth = () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -21,12 +23,36 @@ export default function App() {
   const [supported, setSupported] = useState({}); // forestId -> { given, healthAtJoin }
   const [view, setView] = useState("map");          // "map" | "cards"
   const [chosen, setChosen] = useState(false);      // panel appears only after a selection
+  const [privacy, setPrivacy] = useState(false);    // give via Privacy Pools
+
+  const [account, setAccount] = useState(null);     // connected wallet (from Header)
+  const sessionReady = useRef(false);               // bridge keys + session prepared
 
   const globeRef = useRef(null);
   const panelRef = useRef(null);
 
   const target = custom || forests.find((f) => f.id === selectedId);
 
+  // ---- Solana AI swarm (WebSocket) ---------------------------------------
+  const onRelease = useCallback((msg) => {
+    setForests((prev) => prev.map((x) => {
+      if (x.id !== msg.projectId) return x;
+      const newHealth = Math.min(x.target, x.health + 2);
+      return {
+        ...x,
+        health: newHealth,
+        setAside: Math.max(0, x.setAside + (msg.escrowDelta || 0)),
+        paid: x.paid + (msg.releasedDelta || 0),
+      };
+    }));
+    setMessage(`Growth confirmed from space. <strong>${fmt(Math.abs(msg.releasedDelta || 0))} ETH</strong> released to the planters` +
+      (msg.txHash ? ` · tx <code>${String(msg.txHash).slice(0, 10)}…</code>` : "") + ".");
+    setBusy(false);
+  }, []);
+
+  const swarm = useSwarm({ onRelease });
+
+  // ---- Selection ---------------------------------------------------------
   const scrollToPanel = useCallback(() => {
     requestAnimationFrame(() => scrollTo(panelRef.current));
   }, []);
@@ -39,31 +65,57 @@ export default function App() {
     setCustom({ custom: true, lat, lng }); setMessage(""); setChosen(true); scrollToPanel();
   }, [scrollToPanel]);
 
-  // Pledge funds (locked until proof)
+  // Prepare ZK keys + pool session once, lazily, before a private deposit.
+  const ensureSession = useCallback(async () => {
+    if (sessionReady.current) return;
+    await bridge.deriveKeys(account || "0x0000000000000000000000000000000000000000");
+    await bridge.createSession();
+    sessionReady.current = true;
+  }, [account]);
+
+  // ---- Pledge funds (locked until proof) ---------------------------------
   const onFund = useCallback(async () => {
     setBusy(true); setMessage("");
-    await wait(900);
+    const amt = amount;
+
+    // Best-effort real EVM bridge call; fall back to the local simulation.
+    let mode = "simulated";
+    try {
+      if (await bridgeReachable()) {
+        if (privacy) {
+          await ensureSession();
+          await bridge.deposit(amt);          // shield into the privacy pool
+          await bridge.transfer(amt);         // private transfer to escrow
+        } else {
+          await bridge.publicDeposit(amt);    // direct donor → escrow
+        }
+        mode = "real";
+      }
+    } catch (e) {
+      console.warn("Bridge call failed, using simulation:", e);
+    }
+
     if (!custom) {
-      setForests((prev) => prev.map((f) => (f.id === target.id ? { ...f, setAside: f.setAside + amount } : f)));
+      setForests((prev) => prev.map((f) => (f.id === target.id ? { ...f, setAside: f.setAside + amt } : f)));
       setSupported((prev) => {
         const ex = prev[target.id];
-        return { ...prev, [target.id]: { given: (ex?.given || 0) + amount, healthAtJoin: ex?.healthAtJoin ?? target.health } };
+        return { ...prev, [target.id]: { given: (ex?.given || 0) + amt, healthAtJoin: ex?.healthAtJoin ?? target.health } };
       });
-      setMessage(""); // confirmation now lives in the Step 4 "locked safely" block
+      setMessage(""); // confirmation lives in the "locked safely" block
     } else {
-      setMessage(`Thank you. <strong>${fmt(amount)} ETH</strong> is pledged for a new project at ${target.lat.toFixed(2)}°, ${target.lng.toFixed(2)}°. Our team will plan the planting.`);
+      const how = privacy ? " privately" : "";
+      setMessage(`Thank you. <strong>${fmt(amt)} ETH</strong> is pledged${how} (${mode}) for a new project at ` +
+        `${target.lat.toFixed(2)}°, ${target.lng.toFixed(2)}°. Our team will plan the planting.`);
     }
     setBusy(false);
-  }, [amount, custom, target]);
+  }, [amount, custom, target, privacy, ensureSession]);
 
-  // Satellite check → growth → release payment
-  const onCheck = useCallback(async () => {
-    if (custom) return;
-    setBusy(true);
+  // ---- Satellite check → swarm consensus → release -----------------------
+  const simulatedCheck = useCallback(async () => {
     const steps = [
       "Asking the satellite for the latest photo…",
       "Measuring how green and healthy the land is…",
-      "Double-checking the result so nothing can be faked…"
+      "Double-checking the result so nothing can be faked…",
     ];
     for (const s of steps) { setMessage(s); await wait(1000); }
     const f = forests.find((x) => x.id === target.id);
@@ -78,12 +130,32 @@ export default function App() {
       setMessage(`This forest reached its healthy goal of <strong>${f.target}/100</strong>. Wonderful work — all funds have been paid for proven growth.`);
     }
     setBusy(false);
-  }, [custom, forests, target]);
+  }, [forests, target]);
+
+  const onCheck = useCallback(async () => {
+    if (custom) return;
+    setBusy(true); setMessage("");
+    try {
+      // Real path: the swarm streams logs/NDVI/release over WebSocket.
+      await swarm.runScan(target.id);
+      // busy is cleared by onRelease (or the safety effect below).
+    } catch (e) {
+      console.warn("Swarm unreachable, using simulation:", e);
+      await simulatedCheck();
+    }
+  }, [custom, target, swarm, simulatedCheck]);
+
+  // Safety: if the swarm finishes without a release event, stop the spinner.
+  useEffect(() => {
+    if (busy && (swarm.status === "idle" || swarm.status === "completed") && swarm.logs.length > 0) {
+      setBusy(false);
+    }
+  }, [busy, swarm.status, swarm.logs.length]);
 
   return (
     <>
       <a href="#main" className="skip-link">Skip to main content</a>
-      <Header />
+      <Header onAccount={setAccount} />
       <main id="main">
         <section className="section" id="globe" ref={globeRef}>
           <div className="wrap">
@@ -136,6 +208,7 @@ export default function App() {
                   target={target} amount={amount} setAmount={setAmount}
                   onFund={onFund} onCheck={onCheck} busy={busy} message={message}
                   impact={!custom ? supported[selectedId] : undefined}
+                  privacy={privacy} setPrivacy={setPrivacy} swarm={swarm}
                 />
               </div>
             </motion.section>
