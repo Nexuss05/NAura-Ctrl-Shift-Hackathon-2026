@@ -14,14 +14,14 @@ import { sepolia } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 
 const RPC = "https://ethereum-sepolia-rpc.publicnode.com";
-const ENTRYPOINT = "0xC02b4350223dB390F87DbeCa86b823fE6dBBc8CB";
-const POOL = "0xECe9272a220237D2426Fd3494585DBa2368421E4";
+const ENTRYPOINT = "0xDd70ef8B8965962c3695E193a2D9A44a3D03275f";
+const POOL = "0xbC876a3208dcAa6A86b71C74Bed0c9e0D3086976";
 const WASM = "/tmp/pp-artifacts/artifacts/withdraw.wasm";
 const ZKEY = "/tmp/pp-artifacts/artifacts/withdraw.zkey";
 const KEY = process.env.PK;
 const MNEMONIC = "legal winner thank year wave sausage worth useful legal winner thank yellow";
 const NONCE = 0n;
-const FROM_BLOCK = 11058440n;
+const FROM_BLOCK = 11058937n;
 const account = privateKeyToAccount(KEY);
 const ME = account.address;
 
@@ -109,8 +109,34 @@ console.log("generating withdrawal proof with snarkjs + our own artifacts (~10-4
 const { proof, publicSignals } = await snarkjs.groth16.fullProve(signals, WASM, ZKEY);
 console.log("proof generated, submitting withdraw...");
 
-const tx = await contracts.withdraw(withdrawal, { proof, publicSignals }, scope);
-const hash = tx.hash ?? tx;
-console.log("withdraw tx:", hash);
-await tx.wait();
+// format the proof for the verifier (Groth16 G2 swap), then submit directly via our own wallet client
+const fmt = {
+  pA: [BigInt(proof.pi_a[0]), BigInt(proof.pi_a[1])],
+  pB: [
+    [BigInt(proof.pi_b[0][1]), BigInt(proof.pi_b[0][0])],
+    [BigInt(proof.pi_b[1][1]), BigInt(proof.pi_b[1][0])],
+  ],
+  pC: [BigInt(proof.pi_c[0]), BigInt(proof.pi_c[1])],
+  pubSignals: publicSignals.map((s) => BigInt(s)),
+};
+const withdrawAbi = [
+  {
+    name: "withdraw",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "_w", type: "tuple", components: [{ name: "processooor", type: "address" }, { name: "data", type: "bytes" }] },
+      { name: "_p", type: "tuple", components: [
+        { name: "pA", type: "uint256[2]" },
+        { name: "pB", type: "uint256[2][2]" },
+        { name: "pC", type: "uint256[2]" },
+        { name: "pubSignals", type: "uint256[8]" },
+      ] },
+    ],
+    outputs: [],
+  },
+];
+const txh = await wallet.writeContract({ address: POOL, abi: withdrawAbi, functionName: "withdraw", args: [withdrawal, fmt] });
+console.log("withdraw tx:", txh);
+await pub.waitForTransactionReceipt({ hash: txh });
 console.log("WITHDRAW CONFIRMED ✅");

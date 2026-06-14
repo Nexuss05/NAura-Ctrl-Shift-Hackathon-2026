@@ -1,39 +1,22 @@
 {
+  "network": "sepolia",
   "chainId": 11155111,
-  "contracts": [
-    {
-      "name": "WithdrawalVerifier",
-      "address": "0x372479770419e05a190b3be0dae15a7f711e1245",
-      "deployer": "0x66043d5539802cc7b5f979e154c570d1d201bb1e",
-      "deploymentBlock": 11058426
-    },
-    {
-      "name": "CommitmentVerifier",
-      "address": "0x0a9430de54130696c5b124ada9930d5d2663acdf",
-      "deployer": "0x66043d5539802cc7b5f979e154c570d1d201bb1e",
-      "deploymentBlock": 11058426
-    },
-    {
-      "name": "Entrypoint_Implementation",
-      "address": "0x7959c189116d54b2d81155308b0959da108cc97f",
-      "deployer": "0x66043d5539802cc7b5f979e154c570d1d201bb1e",
-      "deploymentBlock": 11058426
-    },
-    {
-      "name": "Entrypoint_Proxy",
-      "address": "0xc02b4350223db390f87dbeca86b823fe6dbbc8cb",
-      "deployer": "0x66043d5539802cc7b5f979e154c570d1d201bb1e",
-      "deploymentBlock": 11058426,
-      "constructorArgs": "0x0000000000000000000000007959c189116d54b2d81155308b0959da108cc97f00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000044485cc95500000000000000000000000066043d5539802cc7b5f979e154c570d1d201bb1e00000000000000000000000066043d5539802cc7b5f979e154c570d1d201bb1e00000000000000000000000000000000000000000000000000000000"
-    },
-    {
-      "name": "PrivacyPoolSimple_ETH",
-      "address": "0xece9272a220237d2426fd3494585dba2368421e4",
-      "deployer": "0x66043d5539802cc7b5f979e154c570d1d201bb1e",
-      "deploymentBlock": 11058426,
-      "scope": 13479869856114857170662109223138845508536261922700126993363980204049299860487,
-      "asset": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-      "constructorArgs": "0x000000000000000000000000c02b4350223db390f87dbeca86b823fe6dbbc8cb000000000000000000000000372479770419e05a190b3be0dae15a7f711e12450000000000000000000000000a9430de54130696c5b124ada9930d5d2663acdf"
-    }
-  ]
+  "note": "Working Privacy Pools deployment. The WithdrawalVerifier was regenerated from the proving key (the upstream repo's committed verifier did not match its committed proving key, which caused on-chain InvalidProof). Full deposit -> shielded -> withdraw round-trip verified on-chain.",
+  "ownerAndPostman": "0x8De48E03a131E0Ecf93198E8F4b104E7caD99530",
+  "contracts": {
+    "Entrypoint": "0xDd70ef8B8965962c3695E193a2D9A44a3D03275f",
+    "PrivacyPoolSimple_ETH": "0xbC876a3208dcAa6A86b71C74Bed0c9e0D3086976",
+    "WithdrawalVerifier": "0x093E4eAe08bcb4942D19083F3b460f850d31c2ED",
+    "RagequitVerifier": "0xe3223f422d1dDd8832Ad017a2E5287c5d2E6471f"
+  },
+  "roundTrip": {
+    "deposit_1": "0x14d81e8ea8252311207f2f87fef7f84202d3723a9cd1f6bd836faffe55a45d95",
+    "deposit_2": "0x096ac4797b1d0a2fb32fb08db53f3b523a6648b4c1a541c6e1206905735ae202",
+    "withdraw": "0x17600f517402b907b75bc97a2bfb02a453ab46a3e62bb70e25c86730d10861a9"
+  },
+  "previousDeployment_brokenVerifier": {
+    "Entrypoint": "0xC02b4350223dB390F87DbeCa86b823fE6dBBc8CB",
+    "PrivacyPoolSimple_ETH": "0xECe9272a220237D2426Fd3494585DBa2368421E4",
+    "note": "verifier did not match the proving key -> withdraw reverted with InvalidProof; superseded by the deployment above"
+  }
 }

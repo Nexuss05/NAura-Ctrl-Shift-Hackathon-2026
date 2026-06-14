@@ -10,8 +10,8 @@ import { createPublicClient, http, parseEther } from "viem";
 import { writeFileSync } from "fs";
 
 const RPC = "https://ethereum-sepolia-rpc.publicnode.com";
-const ENTRYPOINT = "0xC02b4350223dB390F87DbeCa86b823fE6dBBc8CB";
-const POOL = "0xECe9272a220237D2426Fd3494585DBa2368421E4";
+const ENTRYPOINT = "0xDd70ef8B8965962c3695E193a2D9A44a3D03275f";
+const POOL = "0xbC876a3208dcAa6A86b71C74Bed0c9e0D3086976";
 const KEY = process.env.PK;
 // fixed testnet mnemonic so the note is reproducible for the later withdrawal
 const MNEMONIC = "legal winner thank year wave sausage worth useful legal winner thank yellow";
