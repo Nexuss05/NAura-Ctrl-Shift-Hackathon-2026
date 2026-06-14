@@ -4,6 +4,7 @@
 import { generateMasterKeys, generateDepositSecrets, hashPrecommitment } from "@0xbow/privacy-pools-core-sdk";
 import { BrowserProvider, Contract, parseEther } from "ethers";
 import { generateMnemonic, english } from "viem/accounts";
+import { ensureConnected } from "./wallet.js";
 
 const ENTRYPOINT = import.meta.env.VITE_PP_ENTRYPOINT || "0xDd70ef8B8965962c3695E193a2D9A44a3D03275f";
 const POOL = import.meta.env.VITE_PP_POOL || "0xbC876a3208dcAa6A86b71C74Bed0c9e0D3086976";
@@ -23,8 +24,9 @@ export function isConfigured() {
  */
 export async function privateDeposit(amountEth) {
   if (!isConfigured()) throw new Error("Privacy Pool not configured / no wallet");
+  const addr = await ensureConnected();
   const provider = new BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
+  const signer = await provider.getSigner(addr); // explicit addr → no extra eth_requestAccounts prompt
 
   const pool = new Contract(POOL, POOL_ABI, provider);
   const scope = await pool.SCOPE();

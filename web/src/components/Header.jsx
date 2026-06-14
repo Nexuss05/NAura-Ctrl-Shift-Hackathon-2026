@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Coins } from "../Icons.jsx";
+import { ensureConnected } from "../lib/wallet.js";
 
 // Read the rendered background colour directly under the topbar and pick the
 // text theme from its luminance, so contrast always matches the real backdrop.
@@ -65,10 +66,10 @@ export default function Header({ onAccount }) {
     }
     try {
       setConnecting(true);
-      const accounts = await eth.request({ method: "eth_requestAccounts" });
-      setAccount(accounts?.[0] ?? null);
+      const addr = await ensureConnected(); // shared, deduped — never double-prompts
+      setAccount(addr);
     } catch {
-      // user rejected or request failed — keep current state
+      // user rejected, request already pending, or no wallet — keep current state
     } finally {
       setConnecting(false);
     }
