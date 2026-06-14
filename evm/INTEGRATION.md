@@ -4,6 +4,11 @@ The contract (`evm/contracts/NauraEscrow.sol`) is the real, user-controlled on-c
 donation tool can fund. It plugs in behind the existing real-first / simulated-fallback pattern, so the
 demo keeps working whether or not the contract is deployed.
 
+## Live deployment (Sepolia)
+- **NauraEscrow:** `0xAB313b7dF91Fad2C169c5D592a7c1c45CD4c84d0`
+- Explorer: https://sepolia.etherscan.io/address/0xAB313b7dF91Fad2C169c5D592a7c1c45CD4c84d0
+- fee: 0.5% (50 bps). See `deployments.json`. `web/.env.example` is pre-filled with this address.
+
 ## Turn it on
 1. **Deploy** the contract (see `evm/README.md`):
    ```bash
