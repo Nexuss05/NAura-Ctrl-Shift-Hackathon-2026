@@ -13,9 +13,9 @@ Instead of relying on corruptible human audits or tedious manual reports, NAura 
 > (`qiang/evm-escrow`) is EVM / Sepolia.**
 
 - **Naura escrow:** [`0xAB31…84d0`](https://sepolia.etherscan.io/address/0xAB313b7dF91Fad2C169c5D592a7c1c45CD4c84d0) — Solidity, **14/14 tests**, full create→fund→release run on-chain (`evm/`).
-- **0xbow Privacy Pools, self-deployed:** Entrypoint [`0xC02b…c8CB`](https://sepolia.etherscan.io/address/0xC02b4350223dB390F87DbeCa86b823fE6dBBc8CB) · ETH Pool [`0xECe9…21E4`](https://sepolia.etherscan.io/address/0xECe9272a220237D2426Fd3494585DBa2368421E4) · **real shielded deposit** ([tx](https://sepolia.etherscan.io/tx/0x7d81ceca0e6632c86bd542361f97122bbe7704ef1e6d4d7ac5d4cb118903bdde)) (`evm/privacy-pools/`).
+- **0xbow Privacy Pools, self-deployed:** Entrypoint [`0xDd70…275f`](https://sepolia.etherscan.io/address/0xDd70ef8B8965962c3695E193a2D9A44a3D03275f) · ETH Pool [`0xbC87…6976`](https://sepolia.etherscan.io/address/0xbC876a3208dcAa6A86b71C74Bed0c9e0D3086976) · **full deposit → shielded → withdraw round-trip** ([withdraw tx](https://sepolia.etherscan.io/tx/0x17600f517402b907b75bc97a2bfb02a453ab46a3e62bb70e25c86730d10861a9)) (`evm/privacy-pools/`).
 - **Live frontend:** https://naura.pages.dev (Cloudflare Pages).
-- **Status:** escrow ✅ · Privacy Pools deploy ✅ · shielded deposit ✅ · shielded withdrawal ⛔ (blocked on an SDK circuit-version integrity pin — see `evm/privacy-pools/README.md`).
+- **Status:** escrow ✅ · Privacy Pools deploy ✅ · shielded deposit ✅ · **shielded withdrawal ✅ (full round-trip on-chain)** — see `evm/privacy-pools/`.
 
 ---
 

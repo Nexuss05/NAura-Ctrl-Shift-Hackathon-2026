@@ -18,7 +18,7 @@ contributors refund. The owner can pause and emergency-withdraw while paused.
   [setBeneficiary](https://sepolia.etherscan.io/tx/0xe13f1cea3e8f4305ed2407843812dd5045ab29b318f794d51ba22f37e60518dd) ·
   [release](https://sepolia.etherscan.io/tx/0x2cb5d6db3e25fbabebe9c24f3a73c1fd28072be72218e926226fbb959a299311)
 - **Live frontend:** https://naura.pages.dev (Cloudflare Pages)
-- **Privacy Pools integration:** see [`privacy-pools/`](privacy-pools/README.md) — 0xbow Privacy Pools self-deployed on Sepolia + a real shielded deposit.
+- **Privacy Pools integration:** see [`privacy-pools/`](privacy-pools/README.md) — 0xbow Privacy Pools self-deployed on Sepolia + a full deposit → shielded → withdraw round-trip.
 
 ## Build & test
 ```bash
