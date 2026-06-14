@@ -1,0 +1,21 @@
+{
+  "name": "naura-backend",
+  "license": "ISC",
+  "type": "commonjs",
+  "scripts": {
+    "demo": "node --import tsx demo/run-demo.ts",
+    "demo:devnet": "node --import tsx demo/run-demo-devnet.ts",
+    "agent": "node --import tsx agent/cli.ts"
+  },
+  "dependencies": {
+    "@anchor-lang/core": "^1.0.2",
+    "@solana/web3.js": "^1.95.3",
+    "bn.js": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.0",
+    "@types/node": "^20.11.0",
+    "tsx": "^4.22.4",
+    "typescript": "^5.7.3"
+  }
+}
