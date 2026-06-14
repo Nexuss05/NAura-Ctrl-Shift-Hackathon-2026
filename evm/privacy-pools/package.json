@@ -1,0 +1,15 @@
+{
+  "name": "naura-privacy-pools",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Naura — 0xbow Privacy Pools integration (self-deployed on Sepolia)",
+  "scripts": {
+    "deposit": "node deposit.mjs",
+    "withdraw": "node withdraw.mjs"
+  },
+  "dependencies": {
+    "@0xbow/privacy-pools-core-sdk": "^1.2.0",
+    "viem": "^2.22.14"
+  }
+}
