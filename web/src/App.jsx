@@ -66,7 +66,10 @@ export default function App() {
   }, [scrollToPanel]);
 
   const selectCustom = useCallback((lat, lng) => {
-    setCustom({ custom: true, lat, lng }); setMessage(""); setChosen(true); scrollToPanel();
+    // give the custom site a stable id + NDVI target so it gets the SAME real on-chain path as preset forests
+    const id = `custom_${lat.toFixed(3)}_${lng.toFixed(3)}`;
+    setCustom({ custom: true, id, name: "Custom site", lat, lng, target: 700, health: 40 });
+    setMessage(""); setChosen(true); scrollToPanel();
   }, [scrollToPanel]);
 
   // Prepare ZK keys + pool session once, lazily, before a private deposit.
@@ -105,7 +108,7 @@ export default function App() {
     // Best-effort: also escrow on-chain via the Naura EVM contract when configured (see ../evm).
     // Guarded by isConfigured() + try/catch so the simulated demo is never affected.
     try {
-      if (privacy && pp.isConfigured() && !custom) {
+      if (privacy && pp.isConfigured()) {
         // REAL private donation: shielded deposit into the Privacy Pool (client-side, no backend)
         ppAmt = Math.min(amt, 0.005);
         const { txHash } = await pp.privateDeposit(ppAmt);
@@ -113,7 +116,7 @@ export default function App() {
         privateMode = true;
         console.log(`Privacy Pools: shielded ${ppAmt} ETH, tx ${txHash}`);
         mode = "private (Privacy Pools)";
-      } else if (escrow.isConfigured() && !custom) {
+      } else if (escrow.isConfigured()) {
         const me = account || (await escrow.connectedAddress());
         let rec = chainIds.current[target.id];
         if (!rec) {
@@ -143,17 +146,16 @@ export default function App() {
         const ex = prev[target.id];
         return { ...prev, [target.id]: { given: (ex?.given || 0) + amt, healthAtJoin: ex?.healthAtJoin ?? target.health } };
       });
-      setMessage(
-        privateMode
-          ? `Private donation shielded via Privacy Pools — <strong>${ppAmt} ETH</strong> · <a href="https://sepolia.etherscan.io/tx/${escrowTx}" target="_blank" rel="noopener">view tx ↗</a>`
-          : escrowTx
-          ? `Real on-chain escrow: <strong>${Math.min(amt, 0.002)} ETH</strong> locked on Sepolia · <a href="https://sepolia.etherscan.io/tx/${escrowTx}" target="_blank" rel="noopener">view tx ↗</a>`
-          : ""); // simulated: confirmation lives in the "locked safely" block
-    } else {
-      const how = privacy ? " privately" : "";
-      setMessage(`Thank you. <strong>${fmt(amt)} ETH</strong> is pledged${how} (${mode}) for a new project at ` +
-        `${target.lat.toFixed(2)}°, ${target.lng.toFixed(2)}°. Our team will plan the planting.`);
     }
+    setMessage(
+      privateMode
+        ? `Private donation shielded via Privacy Pools — <strong>${ppAmt} ETH</strong> · <a href="https://sepolia.etherscan.io/tx/${escrowTx}" target="_blank" rel="noopener">view tx ↗</a>`
+        : escrowTx
+        ? `Real on-chain escrow: <strong>${Math.min(amt, 0.002)} ETH</strong> locked on Sepolia · <a href="https://sepolia.etherscan.io/tx/${escrowTx}" target="_blank" rel="noopener">view tx ↗</a>`
+        : custom
+        ? `Thank you. <strong>${fmt(amt)} ETH</strong> is pledged${privacy ? " privately" : ""} (${mode}) for a new project at ` +
+          `${target.lat.toFixed(2)}°, ${target.lng.toFixed(2)}°. Our team will plan the planting.`
+        : ""); // simulated preset: confirmation lives in the "locked safely" block
     setBusy(false);
   }, [amount, custom, target, privacy, ensureSession, account]);
 
@@ -166,6 +168,11 @@ export default function App() {
     ];
     for (const s of steps) { setMessage(s); await wait(1000); }
     const f = forests.find((x) => x.id === target.id);
+    if (!f) { // custom site — not in the preset forest list
+      setMessage(`Growth confirmed for your custom site — funds released to the planters.`);
+      setBusy(false);
+      return;
+    }
     if (f.health < f.target) {
       const newHealth = Math.min(f.target, f.health + 2);
       const payout = 1.5;
@@ -180,7 +187,6 @@ export default function App() {
   }, [forests, target]);
 
   const onCheck = useCallback(async () => {
-    if (custom) return;
     setBusy(true); setMessage("");
 
     // Real on-chain path: if this forest has a funded escrow project, the user (the project authority)
