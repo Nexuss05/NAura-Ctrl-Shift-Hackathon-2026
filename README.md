@@ -31,9 +31,15 @@ The codebase is split into modular components:
 ├── model.js                    # [MVVM Model] Application data structures & state
 ├── viewmodel.js                # [MVVM ViewModel] UI commands, WS connections
 ├── view.js                     # [MVVM View] DOM listeners, slide sliders & Globe.gl
+├── WALLETS_SETUP.md            # Detailed EVM / Solana setup tutorial guide
 ├── anchor/                     # Solana Anchor contract folder
 │   ├── programs/naura-escrow/  # Rust source code (initialize, deposit, release_funds)
 │   └── Anchor.toml             # Anchor configuration settings
+├── pp-bridge/                  # Node.js Express ZK Privacy Pool payment bridge
+│   ├── server.js               # Express API endpoints & 0xBow SDK integration
+│   ├── secretDerivationPayload.js # EIP-712 typed key derivation signature configuration
+│   ├── .env                    # Sepolia private RPC & testnet wallet variables
+│   └── package.json            # Node dependencies (viem, express, 0xbow-sdk)
 └── backend/                    # Python Swarm Agent services
     ├── requirements.txt        # Backend dependencies
     ├── ndvi_calculator.py      # Sentinel-2 B4/B8 band NDVI raster math (rasterio)
@@ -58,9 +64,9 @@ No server installation required. Double-click the [index.html](file:///Users/mat
 
 ---
 
-### Option B: Live Swarm Mode (Python WebSockets Server)
+### Option B: Live Swarm Mode (AI Swarm + ZK Privacy Pools v2 Bridge)
 
-To run the real Python agent swarm, raster calculations, and real Solana devnet transaction signing:
+To run the real Python agent swarm, raster calculations, EVM ZK-Privacy Pool bridge payments, and real Solana devnet transaction signing:
 
 1. **Setup Python Virtual Environment**:
    ```bash
@@ -75,16 +81,26 @@ To run the real Python agent swarm, raster calculations, and real Solana devnet 
    python backend/generate_sample_tiles.py
    ```
 
-3. **Start the Swarm Orchestrator**:
+3. **Start the ZK PP-Bridge Node.js Server**:
+   Open a separate terminal window and start the Express server (running on `localhost:3001`):
+   ```bash
+   cd pp-bridge
+   npm install
+   npm run dev
+   ```
+   *Note: Detailed instructions on wallets generation, faucet funding, private Sepolia RPC setups, and ZK/direct-deposit configurations can be found in the [WALLETS_SETUP.md](file:///Users/matteocotena/Documents/Hackathon%20CTRL-SHIFT/Github/NAura-Backend/WALLETS_SETUP.md) playbook.*
+
+4. **Start the Swarm Orchestrator**:
    Launch the WebSockets server on `localhost:8000`:
    ```bash
    python backend/agent_swarm.py
    ```
 
-4. **Launch Dashboard**:
+5. **Launch Dashboard**:
    Open [index.html](file:///Users/matteocotena/Documents/Hackathon%20CTRL-SHIFT/Github/NAura-Backend/index.html) in your browser. 
-   * The dashboard will detect the running WebSocket server and connect automatically.
-   * Clicking **Run Swarm Scan** will now trigger the real Python swarm: downloading TIFF data, running `rasterio` NDVI calculations, requesting devnet SOL fee airdrops, signing and broadcasting real transactions to Solana Devnet, and streaming live logs back to the frontend.
+   * The dashboard will detect the running WebSocket server and the running PP-Bridge server, connecting automatically.
+   * Toggle between **zk-Privacy Pool (Shielded)** and **Public Direct Deposit** modes to execute direct transfers or run ZK signatures, commitments, and relayer operations.
+   * Clicking **Run Swarm Scan** will now trigger the real Python swarm: downloading TIFF data, running `rasterio` NDVI calculations, signing and broadcasting real PDA transactions to Solana Devnet, and streaming live logs back to the frontend.
 
 ---
 
