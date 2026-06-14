@@ -4,7 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // Streams console logs, NDVI updates, scan status and escrow-release events.
 // Lazily connects on the first runScan() and stays open for live updates.
 
-const URL = import.meta.env.VITE_SWARM_URL || "ws://localhost:8000/events";
+// In dev, default to the local swarm; in production only connect to an explicitly configured URL
+// (otherwise the public site would try ws://localhost:8000 and log a connection error).
+const URL = import.meta.env.VITE_SWARM_URL || (import.meta.env.DEV ? "ws://localhost:8000/events" : "");
 
 export function useSwarm({ onRelease, onNdvi } = {}) {
   const [connected, setConnected] = useState(false);
@@ -37,6 +39,7 @@ export function useSwarm({ onRelease, onNdvi } = {}) {
 
   const ensureSocket = useCallback(() => {
     return new Promise((resolve, reject) => {
+      if (!URL) return reject(new Error("swarm not configured")); // public build — skip, fall back to simulation
       const existing = wsRef.current;
       if (existing && existing.readyState === WebSocket.OPEN) return resolve(existing);
       let ws;

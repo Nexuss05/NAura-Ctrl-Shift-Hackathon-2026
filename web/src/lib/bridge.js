@@ -2,7 +2,9 @@
 // Every call throws on network/HTTP error so callers can fall back to the
 // local simulated flow (mirrors the bridge's own FORCE_SIMULATION behaviour).
 
-const BASE = import.meta.env.VITE_BRIDGE_URL || "http://localhost:3001";
+// In dev, default to the local bridge; in production only use an explicitly configured URL
+// (otherwise we'd hit localhost:3001 from the public site and log a connection-refused error).
+const BASE = import.meta.env.VITE_BRIDGE_URL || (import.meta.env.DEV ? "http://localhost:3001" : "");
 
 async function call(path, { method = "GET", body } = {}) {
   const res = await fetch(`${BASE}${path}`, {
@@ -32,6 +34,7 @@ export const bridge = {
 
 // Quick reachability probe used to decide real-vs-simulated at runtime.
 export async function bridgeReachable() {
+  if (!BASE) return false; // no bridge configured (e.g. the public build) — skip the probe entirely
   try {
     await bridge.status();
     return true;
