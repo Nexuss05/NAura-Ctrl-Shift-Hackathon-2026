@@ -1,0 +1,11 @@
+# Privacy Pools v2 SDK registry config (0xbow bounty).
+# Copy this file to `.npmrc` (which is gitignored) and install with the token as an env var:
+#
+#   cp .npmrc.example .npmrc
+#   NODE_AUTH_TOKEN='<your 0xbow GitHub Packages read token>' npm install @0xbow-io/privacy-pools-v2-sdk@beta
+#
+# The token is NOT stored in this file — it is read from the NODE_AUTH_TOKEN environment variable
+# at install time, so no secret ever lands in the repo. Ask the 0xbow maintainer for a token if you
+# get a 401 (the hackathon tokens are short-lived and get auto-revoked when shared publicly).
+@0xbow-io:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}

@@ -16,11 +16,12 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { buildSecretDerivationPayload } from './secretDerivationPayload.js';
 
 // ─── SDK Import (graceful fallback if not installed yet) ────────────────────
-let CryptoService, PoolSessionBuilder, SDK_AVAILABLE;
+let CryptoService, PoolSessionBuilder, DEFAULT_CIRCUIT_MANIFEST, SDK_AVAILABLE;
 try {
   const sdk = await import('@0xbow-io/privacy-pools-v2-sdk');
   CryptoService = sdk.CryptoService;
   PoolSessionBuilder = sdk.PoolSessionBuilder;
+  DEFAULT_CIRCUIT_MANIFEST = sdk.DEFAULT_CIRCUIT_MANIFEST;
   SDK_AVAILABLE = true;
   console.log('[PP Bridge] ✅ Privacy Pools v2 SDK loaded successfully.');
 } catch (err) {
@@ -28,6 +29,10 @@ try {
   console.warn('[PP Bridge] ⚠️  Privacy Pools v2 SDK not available:', err.message);
   console.warn('[PP Bridge] Running in SIMULATED mode. Install with: npm install');
 }
+
+// Default FORCE_SIMULATION to 'true' if not specified, since 0xBow IPFS artifacts are currently unpinned/timeout on the public network
+const FORCE_SIMULATION = process.env.FORCE_SIMULATION !== 'false';
+const USE_SIMULATION = !SDK_AVAILABLE || FORCE_SIMULATION;
 
 // ─── Configuration ──────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
@@ -101,7 +106,7 @@ app.get('/api/pp/status', async (req, res) => {
     }
 
     res.json({
-      sdkAvailable: SDK_AVAILABLE,
+      sdkAvailable: !USE_SIMULATION,
       donorAddress: donorAccount?.address || null,
       escrowAddress: escrowAccount?.address || null,
       donorSepoliaBalance: donorBalance,
@@ -119,7 +124,7 @@ app.get('/api/pp/status', async (req, res) => {
 // ─── Step 1: Derive Keys ────────────────────────────────────────────────────
 app.post('/api/pp/derive-keys', async (req, res) => {
   try {
-    if (!donorWalletClient) {
+    if (!donorWalletClient || USE_SIMULATION) {
       // Simulated mode — return realistic-looking keys
       console.log('[PP Bridge] Simulated key derivation (no wallet configured)');
       const simKeys = {
@@ -141,16 +146,24 @@ app.post('/api/pp/derive-keys', async (req, res) => {
     console.log(`[PP Bridge] Signing EIP-712 key derivation for ${address}...`);
     const signature = await donorWalletClient.signTypedData(payload);
 
-    if (SDK_AVAILABLE) {
+    if (SDK_AVAILABLE && !USE_SIMULATION) {
       const cryptoSvc = new CryptoService();
-      const keys = cryptoSvc.deriveKeysFromSignature({
+      const sdkKeys = cryptoSvc.deriveKeysFromSignature({
         signature,
         signerAddress: address,
         addressHash: payload.message.addressHash,
         revocableKeyIndex: '0x0',
       });
 
-      donorKeys = { ...keys, revocableKeyIndex: '0x0', mode: 'real' };
+      donorKeys = {
+        identityNullifier: sdkKeys.privateNullifyingKey,
+        identitySecret: sdkKeys.privateRevocableKey,
+        viewingKey: sdkKeys.viewingPublicKey,
+        spendingKey: sdkKeys.privateNullifyingKey,
+        revocableKeyIndex: '0x0',
+        mode: 'real',
+        sdkKeys: sdkKeys, // Keep original keys for session builder
+      };
       console.log('[PP Bridge] ✅ Real protocol keys derived successfully.');
     } else {
       // SDK not available but we have a real signature
@@ -173,6 +186,27 @@ app.post('/api/pp/derive-keys', async (req, res) => {
   }
 });
 
+// Helper function to patch circuit manifest SHA256 hashes with 0x prefix if missing
+function prefixManifestSha256(obj) {
+  if (typeof obj !== 'object' || obj === null) {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(prefixManifestSha256);
+  }
+  const cloned = {};
+  for (const [key, val] of Object.entries(obj)) {
+    if (typeof val === 'string' && (key.endsWith('Sha256') || key.endsWith('SHA256'))) {
+      cloned[key] = val.startsWith('0x') ? val : '0x' + val;
+    } else if (typeof val === 'object' && val !== null) {
+      cloned[key] = prefixManifestSha256(val);
+    } else {
+      cloned[key] = val;
+    }
+  }
+  return cloned;
+}
+
 // ─── Step 2: Create Session ─────────────────────────────────────────────────
 app.post('/api/pp/create-session', async (req, res) => {
   try {
@@ -180,7 +214,7 @@ app.post('/api/pp/create-session', async (req, res) => {
       return res.status(400).json({ error: 'Keys not derived yet. Call /derive-keys first.' });
     }
 
-    if (!SDK_AVAILABLE || !donorWalletClient) {
+    if (USE_SIMULATION || !donorWalletClient) {
       console.log('[PP Bridge] Simulated session creation');
       donorSession = { simulated: true, createdAt: new Date().toISOString() };
       return res.json({ status: 'session_created', mode: 'simulated' });
@@ -190,12 +224,43 @@ app.post('/api/pp/create-session', async (req, res) => {
     const address = donorAccount.address;
     console.log(`[PP Bridge] Creating PoolSession for ${address}...`);
 
+    const sdkKeys = {
+      ...(donorKeys.sdkKeys || {
+        privateNullifyingKey: donorKeys.identityNullifier,
+        privateRevocableKey: donorKeys.identitySecret,
+        viewingPrivateKey: donorKeys.identitySecret,
+        viewingPublicKey: donorKeys.viewingKey,
+      }),
+      revocableKeyIndex: donorKeys.revocableKeyIndex || '0x0',
+    };
+
+    console.log('[PP Bridge] Debug donorKeys:', JSON.stringify(donorKeys, null, 2));
+    console.log('[PP Bridge] Debug sdkKeys:', JSON.stringify(sdkKeys, null, 2));
+
+    const patchedManifest = prefixManifestSha256(DEFAULT_CIRCUIT_MANIFEST);
+    console.log('[PP Bridge] Patched circuit manifest keys successfully.');
+
     donorSession = await PoolSessionBuilder.fromConfig({
       chainId: 11155111,
       rpcUrl: SEPOLIA_RPC_URL,
       ownerAddress: address,
-      protocolKeys: { ...donorKeys, revocableKeyIndex: '0x0' },
+      protocolKeys: sdkKeys,
       aspUrl: ASP_URL,
+      circuitManifest: patchedManifest,
+      ipfsGatewayUrl: 'https://ipfs.io/ipfs',
+      circuitGatewayUrls: [
+        'https://cloudflare-ipfs.com/ipfs',
+        'https://gateway.pinata.cloud/ipfs',
+        'https://ipfs.io/ipfs',
+        'https://dweb.link/ipfs',
+        'https://w3s.link/ipfs',
+        'https://4everland.io/ipfs'
+      ],
+      httpClientConfig: {
+        timeout: 300000, // 5 minutes to download large proving key files
+        retryAttempts: 3,
+        retryDelay: 1000,
+      },
       relayers: [
         {
           url: RELAYER_URL,
@@ -225,7 +290,7 @@ app.post('/api/pp/deposit', async (req, res) => {
     const weiAmount = parseEther(amount);
     const hexValue = '0x' + weiAmount.toString(16);
 
-    if (!donorSession || donorSession.simulated || !SDK_AVAILABLE) {
+    if (!donorSession || donorSession.simulated || USE_SIMULATION) {
       // Simulated deposit — generate realistic-looking commitment
       console.log(`[PP Bridge] Simulated deposit of ${amount} ETH`);
       await new Promise(r => setTimeout(r, 1500)); // Simulate latency
@@ -244,7 +309,7 @@ app.post('/api/pp/deposit', async (req, res) => {
         note: {
           commitment: mockCommitment,
           tokenId: NATIVE_ETH,
-          value: amount,
+          value: parseFloat(amount),
           status: 'ACTIVE',
         },
       });
@@ -268,12 +333,22 @@ app.post('/api/pp/deposit', async (req, res) => {
 
     console.log(`[PP Bridge] ✅ Deposit confirmed. ${activeNotes.length} active note(s).`);
 
+    let formattedNote = null;
+    if (latestNote) {
+      const valEth = parseFloat(formatEther(BigInt(latestNote.value || latestNote.amount || 0)));
+      formattedNote = {
+        ...latestNote,
+        value: valEth,
+        amount: valEth
+      };
+    }
+
     res.json({
       status: 'deposited',
       mode: 'real',
       commitment: latestNote?.commitment || 'pending',
       amount,
-      note: latestNote || null,
+      note: formattedNote,
       totalActiveNotes: activeNotes.length,
     });
   } catch (err) {
@@ -282,21 +357,78 @@ app.post('/api/pp/deposit', async (req, res) => {
   }
 });
 
+// ─── Direct Public Deposit (No Privacy Pools) ───────────────────────────────
+app.post('/api/pp/public-deposit', async (req, res) => {
+  try {
+    const { amount = '0.05' } = req.body;
+    const weiAmount = parseEther(amount);
+
+    if (!donorWalletClient || !escrowAccount) {
+      // Simulated direct deposit
+      console.log(`[PP Bridge] Simulated public deposit of ${amount} ETH directly to escrow`);
+      await new Promise(r => setTimeout(r, 1500));
+      const mockTxHash = '0x' + Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+
+      // Update bridge balance
+      bridgeBalance += weiAmount;
+
+      return res.json({
+        status: 'deposited',
+        mode: 'simulated',
+        txHash: mockTxHash,
+        amount,
+        bridgeBalanceEth: formatEther(bridgeBalance),
+      });
+    }
+
+    // Real direct transfer: donorWalletClient.sendTransaction() to escrowAccount.address
+    console.log(`[PP Bridge] Sending public transfer of ${amount} ETH to escrow...`);
+    const hash = await donorWalletClient.sendTransaction({
+      to: escrowAccount.address,
+      value: weiAmount,
+    });
+
+    console.log(`[PP Bridge] Transaction sent. Hash: ${hash}`);
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+    // Update bridge balance
+    bridgeBalance += weiAmount;
+
+    console.log(`[PP Bridge] ✅ Public deposit settled: ${hash}`);
+
+    res.json({
+      status: 'deposited',
+      mode: 'real',
+      txHash: hash,
+      amount,
+      bridgeBalanceEth: formatEther(bridgeBalance),
+    });
+  } catch (err) {
+    console.error('[PP Bridge] Public deposit error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Step 4: Discover Notes ─────────────────────────────────────────────────
 app.post('/api/pp/discover-notes', async (req, res) => {
   try {
-    if (!donorSession || donorSession.simulated || !SDK_AVAILABLE) {
+    if (!donorSession || donorSession.simulated || USE_SIMULATION) {
       return res.json({ notes: [], mode: 'simulated' });
     }
 
     await donorSession.discoverNotes();
     const account = await donorSession.exportAccount();
-    const notes = account.notes.map(n => ({
-      commitment: n.commitment,
-      amount: n.amount,
-      status: n.status,
-      tokenId: n.tokenId,
-    }));
+    const notes = account.notes.map(n => {
+      const valEth = parseFloat(formatEther(BigInt(n.value || n.amount || 0)));
+      return {
+        commitment: n.commitment,
+        value: valEth,
+        amount: valEth,
+        status: n.status,
+        tokenId: n.tokenId,
+      };
+    });
 
     res.json({ notes, mode: 'real' });
   } catch (err) {
@@ -312,7 +444,7 @@ app.post('/api/pp/transfer', async (req, res) => {
     const weiAmount = parseEther(amount);
     const hexValue = '0x' + weiAmount.toString(16);
 
-    if (!donorSession || donorSession.simulated || !SDK_AVAILABLE) {
+    if (!donorSession || donorSession.simulated || USE_SIMULATION) {
       // Simulated transfer
       console.log(`[PP Bridge] Simulated private transfer of ${amount} ETH to escrow`);
       await new Promise(r => setTimeout(r, 2000));
@@ -393,9 +525,9 @@ app.get('/api/bridge/balance', (req, res) => {
 });
 
 // ─── Start Server ───────────────────────────────────────────────────────────
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`\n🌿 NAura PP Bridge Server running on http://localhost:${PORT}`);
-  console.log(`   SDK:     ${SDK_AVAILABLE ? '✅ Real' : '⚠️  Simulated'}`);
+  console.log(`   SDK:     ${!USE_SIMULATION ? '✅ Real' : '⚠️  Simulated'}`);
   console.log(`   Chain:   Sepolia (11155111)`);
   console.log(`   RPC:     ${SEPOLIA_RPC_URL}`);
   console.log(`   Donor:   ${donorAccount?.address || '(not configured)'}`);
@@ -403,3 +535,6 @@ app.listen(PORT, () => {
   console.log(`   ASP:     ${ASP_URL}`);
   console.log(`   Relayer: ${RELAYER_URL}\n`);
 });
+
+// Set server socket timeout to 5 minutes (matching the HTTP client timeout)
+server.timeout = 300000;

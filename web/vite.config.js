@@ -1,0 +1,9 @@
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { nodePolyfills } from "vite-plugin-node-polyfills";
+
+export default defineConfig({
+  // nodePolyfills: Buffer/process/global for the Privacy Pools SDK (poseidon / maci-crypto) in the browser
+  plugins: [react(), nodePolyfills()],
+  server: { port: 5173, open: true },
+});
