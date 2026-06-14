@@ -4,8 +4,7 @@
   "type": "commonjs",
   "scripts": {
     "demo": "node --import tsx demo/run-demo.ts",
-    "demo:devnet": "node --import tsx demo/run-demo-devnet.ts",
-    "agent": "node --import tsx agent/cli.ts"
+    "demo:devnet": "node --import tsx demo/run-demo-devnet.ts"
   },
   "dependencies": {
     "@anchor-lang/core": "^1.0.2",
