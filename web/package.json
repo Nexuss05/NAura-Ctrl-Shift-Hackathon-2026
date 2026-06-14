@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "ethers": "^6.13.4",
     "framer-motion": "^11.11.0",
     "leaflet": "^1.9.4",
     "leaflet-side-by-side": "^2.2.0",
