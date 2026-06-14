@@ -53,31 +53,29 @@ a{color:inherit}
   -webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border)}
 
 /* ============================================================
-   FLOATING GLASS NAV
+   FLOATING GLASS TOPBAR (logo + wallet)
    ============================================================ */
-.nav{position:fixed;top:1.1rem;left:0;right:0;z-index:1500;display:flex;justify-content:center;
-  padding-inline:1rem;pointer-events:none}
-.nav-inner{pointer-events:auto;width:min(100%,var(--maxw));display:flex;align-items:center;
-  justify-content:space-between;gap:1rem;padding:.55rem .65rem .55rem 1.4rem;
-  border-radius:var(--pill);background:rgba(255,255,255,.14);
+.topbar{position:fixed;top:1.1rem;left:0;right:0;z-index:1500;display:flex;align-items:center;
+  justify-content:space-between;gap:1rem;padding-inline:clamp(1rem,4vw,2rem);pointer-events:none}
+.glass-chip{pointer-events:auto;display:inline-flex;align-items:center;gap:.6rem;
+  padding:.55rem 1.1rem;min-height:48px;border-radius:var(--pill);box-shadow:var(--shadow);
   backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
-  border:1px solid var(--glass-border);box-shadow:var(--shadow)}
-.nav.scrolled .nav-inner{background:rgba(10,30,22,.55)}
-.brand{display:flex;align-items:center;gap:.6rem;text-decoration:none}
-.brand-mark{width:38px;height:38px;flex:none;display:grid;place-items:center;
-  background:var(--lime-500);border-radius:12px;color:var(--green-900)}
-.brand-mark svg{width:22px;height:22px}
-.brand strong{font-family:var(--font-display);font-size:1.45rem;color:#fff;letter-spacing:-.01em}
-.nav-links{display:flex;gap:.3rem;align-items:center}
-.nav-links a{padding:.6rem .95rem;border-radius:var(--pill);color:#fff;text-decoration:none;
-  font-weight:500;font-size:1.02rem;transition:background .2s ease}
-.nav-links a:hover{background:rgba(255,255,255,.18)}
-.nav-cta{background:var(--lime-500);color:var(--green-900);border:none;cursor:pointer;
-  padding:.7rem 1.4rem;border-radius:var(--pill);font-weight:700;font-size:1.02rem;min-height:44px;
-  transition:background .2s ease,transform .1s ease}
-.nav-cta:hover{background:var(--lime-400)}
-.nav-cta:active{transform:translateY(1px)}
-.nav-burger{display:none}
+  border:1px solid var(--glass-border);text-decoration:none;cursor:pointer;
+  transition:background .25s ease,border-color .25s ease,color .25s ease,transform .1s ease}
+/* dynamic contrast: theme chosen from the background under the bar */
+.topbar.behind-light .glass-chip{background:rgba(255,255,255,.62);border-color:rgba(255,255,255,.7);color:var(--green-900)}
+.topbar.behind-dark .glass-chip{background:rgba(10,30,22,.42);border-color:rgba(255,255,255,.18);color:#fff}
+.brand{padding:.35rem 1rem}
+.brand-logo{height:54px;width:auto;display:block}
+/* dark backdrop fallback: keep the dark-green logo legible */
+.topbar.behind-dark .brand-logo{filter:brightness(0) invert(1)}
+.wallet-btn{font-weight:700;font-size:1rem;font-family:var(--font-body)}
+.wallet-btn svg{width:19px;height:19px}
+.wallet-btn:hover{transform:translateY(-1px)}
+.wallet-btn:active{transform:translateY(1px)}
+.wallet-btn:disabled{opacity:.7;cursor:progress}
+.wallet-dot{width:9px;height:9px;border-radius:50%;background:var(--lime-500);
+  box-shadow:0 0 0 3px rgba(163,230,53,.25)}
 
 /* ============================================================
    PHOTO HERO
@@ -122,6 +120,7 @@ a{color:inherit}
    SECTIONS
    ============================================================ */
 .section{padding:clamp(3rem,7vw,5rem) 0}
+main>.section:first-child{padding-top:clamp(6rem,11vw,7.5rem)}
 /* anchored scroll lands clear of the fixed glass nav */
 .section[id],.panel{scroll-margin-top:104px}
 .section-head{text-align:center;margin-bottom:2.5rem;max-width:60ch;margin-inline:auto}
@@ -262,6 +261,17 @@ a{color:inherit}
   background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .2s ease}
 .switch.on{background:var(--green-600);border-color:var(--green-600)}
 .switch.on .switch-knob{transform:translateX(24px)}
+
+/* View toggle — Map vs Quick list */
+.view-toggle{display:flex;width:fit-content;gap:.25rem;padding:.3rem;margin:0 auto 1.6rem;
+  background:var(--green-100);border-radius:var(--pill);border:1px solid var(--green-200)}
+.vt-btn{display:inline-flex;align-items:center;gap:.5rem;border:none;cursor:pointer;
+  padding:.6rem 1.25rem;min-height:44px;border-radius:var(--pill);background:transparent;
+  color:var(--green-800);font-weight:600;font-size:1rem;transition:background .2s ease,color .2s ease}
+.vt-btn svg{width:18px;height:18px}
+.vt-btn:hover{background:var(--green-50)}
+.vt-btn.active{background:var(--green-900);color:#fff}
+.view-stage{min-height:60vh}
 .step3{margin-top:.5rem}
 .after-pledge{margin-top:1.25rem;padding:1.25rem;border-radius:var(--radius-sm);
   background:var(--green-50);border:1px solid var(--green-200)}

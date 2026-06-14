@@ -6,7 +6,12 @@ const reduceMotion = () =>
   typeof window !== "undefined" &&
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-export default function GlobeSelector({ forests, selectedId, onSelectForest, onSelectCustom }) {
+export default function GlobeSelector({
+  forests,
+  selectedId,
+  onSelectForest,
+  onSelectCustom,
+}) {
   const globeEl = useRef();
   const wrapRef = useRef();
   const [size, setSize] = useState({ w: 800, h: 520 });
@@ -16,7 +21,7 @@ export default function GlobeSelector({ forests, selectedId, onSelectForest, onS
     const el = wrapRef.current;
     if (!el) return;
     const ro = new ResizeObserver(() =>
-      setSize({ w: el.clientWidth, h: el.clientHeight })
+      setSize({ w: el.clientWidth, h: el.clientHeight }),
     );
     ro.observe(el);
     return () => ro.disconnect();
@@ -39,7 +44,10 @@ export default function GlobeSelector({ forests, selectedId, onSelectForest, onS
     const f = forests.find((x) => x.id === selectedId);
     if (g && f) {
       g.controls().autoRotate = false;
-      g.pointOfView({ lat: f.lat, lng: f.lng, altitude: 1.6 }, reduceMotion() ? 0 : 1200);
+      g.pointOfView(
+        { lat: f.lat, lng: f.lng, altitude: 1.6 },
+        reduceMotion() ? 0 : 1200,
+      );
     }
   }, [selectedId, forests]);
 
@@ -48,12 +56,18 @@ export default function GlobeSelector({ forests, selectedId, onSelectForest, onS
   return (
     <div className="globe-wrap" ref={wrapRef}>
       <p className="globe-hint">
-        <Cursor /> Click a green marker — or tap any land — to choose where to help.
+        <Cursor /> Click a green marker to choose where to help.
       </p>
 
       <div className="globe-legend">
-        <span><span className="legend-dot" style={{ background: "#10B981" }} /> A forest you can fund</span>
-        <span><span className="legend-dot" style={{ background: "#FCD34D" }} /> Chosen</span>
+        <span>
+          <span className="legend-dot" style={{ background: "#10B981" }} /> A
+          forest you can fund
+        </span>
+        <span>
+          <span className="legend-dot" style={{ background: "#FCD34D" }} />{" "}
+          Chosen
+        </span>
       </div>
 
       <Globe

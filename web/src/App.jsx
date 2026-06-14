@@ -1,11 +1,10 @@
 import { useState, useRef, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import Header from "./components/Header.jsx";
-import Hero from "./components/Hero.jsx";
-import HowItWorks from "./components/HowItWorks.jsx";
 import ForestGallery from "./components/ForestGallery.jsx";
 import GlobeSelector from "./components/GlobeSelector.jsx";
 import FundingPanel from "./components/FundingPanel.jsx";
-import Trust from "./components/Trust.jsx";
+import { Globe, Leaf } from "./Icons.jsx";
 import { FORESTS, goalProgress, fmt } from "./data.js";
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -20,10 +19,10 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [supported, setSupported] = useState({}); // forestId -> { given, healthAtJoin }
+  const [view, setView] = useState("map");          // "map" | "cards"
+  const [chosen, setChosen] = useState(false);      // panel appears only after a selection
 
   const globeRef = useRef(null);
-  const galleryRef = useRef(null);
-  const howRef = useRef(null);
   const panelRef = useRef(null);
 
   const target = custom || forests.find((f) => f.id === selectedId);
@@ -33,11 +32,11 @@ export default function App() {
   }, []);
 
   const selectForest = useCallback((id) => {
-    setCustom(null); setSelectedId(id); setMessage(""); scrollToPanel();
+    setCustom(null); setSelectedId(id); setMessage(""); setChosen(true); scrollToPanel();
   }, [scrollToPanel]);
 
   const selectCustom = useCallback((lat, lng) => {
-    setCustom({ custom: true, lat, lng }); setMessage(""); scrollToPanel();
+    setCustom({ custom: true, lat, lng }); setMessage(""); setChosen(true); scrollToPanel();
   }, [scrollToPanel]);
 
   // Pledge funds (locked until proof)
@@ -84,47 +83,64 @@ export default function App() {
   return (
     <>
       <a href="#main" className="skip-link">Skip to main content</a>
-      <Header onSignIn={() => scrollTo(galleryRef.current)} />
+      <Header />
       <main id="main">
-        <Hero onStart={() => scrollTo(galleryRef.current)} onLearn={() => scrollTo(howRef.current)} />
-
-        <div ref={howRef}><HowItWorks /></div>
-
-        <div ref={galleryRef}>
-          <ForestGallery
-            forests={forests}
-            selectedId={custom ? null : selectedId}
-            supported={supported}
-            onSelect={selectForest}
-          />
-        </div>
-
-        <section className="section" id="globe" style={{ paddingTop: 0 }} ref={globeRef}>
+        <section className="section" id="globe" ref={globeRef}>
           <div className="wrap">
             <div className="section-head">
-              <h2>Or choose any place on the globe</h2>
-              <p>Spin the Earth, click a green marker — or tap any patch of land you care about.</p>
+              <h2>Choose a place to restore</h2>
+              <p>Pick a forest on the map or from the quick list, then choose your gift.</p>
             </div>
-            <GlobeSelector
-              forests={forests}
-              selectedId={custom ? null : selectedId}
-              onSelectForest={selectForest}
-              onSelectCustom={selectCustom}
-            />
+
+            <div className="view-toggle" role="tablist" aria-label="How to choose a forest">
+              <button role="tab" aria-selected={view === "map"}
+                      className={`vt-btn${view === "map" ? " active" : ""}`}
+                      onClick={() => setView("map")}>
+                <Globe /> Explore the map
+              </button>
+              <button role="tab" aria-selected={view === "cards"}
+                      className={`vt-btn${view === "cards" ? " active" : ""}`}
+                      onClick={() => setView("cards")}>
+                <Leaf /> Quick list
+              </button>
+            </div>
+
+            <div className="view-stage">
+              {view === "map" ? (
+                <GlobeSelector
+                  forests={forests}
+                  selectedId={custom ? null : selectedId}
+                  onSelectForest={selectForest}
+                  onSelectCustom={selectCustom}
+                />
+              ) : (
+                <ForestGallery
+                  bare
+                  forests={forests}
+                  selectedId={custom ? null : selectedId}
+                  supported={supported}
+                  onSelect={selectForest}
+                />
+              )}
+            </div>
           </div>
         </section>
 
-        <section className="section" style={{ paddingTop: 0 }}>
-          <div className="wrap" ref={panelRef} style={{ scrollMarginTop: "104px" }}>
-            <FundingPanel
-              target={target} amount={amount} setAmount={setAmount}
-              onFund={onFund} onCheck={onCheck} busy={busy} message={message}
-              impact={!custom ? supported[selectedId] : undefined}
-            />
-          </div>
-        </section>
-
-        <Trust />
+        <AnimatePresence>
+          {chosen && (
+            <motion.section className="section" style={{ paddingTop: 0 }}
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}>
+              <div className="wrap" ref={panelRef} style={{ scrollMarginTop: "104px" }}>
+                <FundingPanel
+                  target={target} amount={amount} setAmount={setAmount}
+                  onFund={onFund} onCheck={onCheck} busy={busy} message={message}
+                  impact={!custom ? supported[selectedId] : undefined}
+                />
+              </div>
+            </motion.section>
+          )}
+        </AnimatePresence>
       </main>
     </>
   );
