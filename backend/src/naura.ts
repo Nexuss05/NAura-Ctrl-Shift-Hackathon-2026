@@ -1,5 +1,5 @@
 /**
- * Naura on-chain client wrapper (Node side, shared by the agent and the demo).
+ * Naura on-chain client wrapper (Node side, shared by the demos and any client).
  * Builds the Program with @anchor-lang/core and wraps PDA derivation + instruction calls.
  */
 import * as anchor from "@anchor-lang/core";
@@ -116,20 +116,20 @@ export async function fundProject(
 
 export async function setBeneficiary(
   program: Program<Naura>,
-  agent: anchor.web3.Keypair,
+  authority: anchor.web3.Keypair,
   project: Pubkey,
   beneficiary: Pubkey
 ) {
   return program.methods
     .setBeneficiary(beneficiary)
-    .accountsPartial({ config: configPda(), project, agentAuthority: agent.publicKey })
-    .signers(extraSigners(program, agent))
+    .accountsPartial({ config: configPda(), project, agentAuthority: authority.publicKey })
+    .signers(extraSigners(program, authority))
     .rpc();
 }
 
 export async function release(
   program: Program<Naura>,
-  agent: anchor.web3.Keypair,
+  authority: anchor.web3.Keypair,
   project: Pubkey,
   args: { amount: anchor.BN; ndviDelta: anchor.BN; beneficiary: Pubkey; feeTreasury: Pubkey }
 ) {
@@ -139,11 +139,11 @@ export async function release(
       config: configPda(),
       project,
       vault: vaultPda(project),
-      agentAuthority: agent.publicKey,
+      agentAuthority: authority.publicKey,
       beneficiary: args.beneficiary,
       feeTreasury: args.feeTreasury,
     })
-    .signers(extraSigners(program, agent))
+    .signers(extraSigners(program, authority))
     .rpc();
 }
 
