@@ -13,6 +13,7 @@ import * as escrow from "./lib/escrow.js";
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const smooth = () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const scrollTo = (el) => el?.scrollIntoView({ behavior: smooth() ? "smooth" : "auto", block: "start" });
+const ORG_ADDRESS = "0xCE9A1CfbF58e0C7C205b10A31a19669603A5aD6F"; // demo reforestation-org beneficiary for on-chain releases
 
 export default function App() {
   const [forests, setForests] = useState(FORESTS);
@@ -103,21 +104,22 @@ export default function App() {
     try {
       if (escrow.isConfigured() && !custom) {
         const me = account || (await escrow.connectedAddress());
-        let pid = chainIds.current[target.id];
-        if (pid === undefined) {
+        let rec = chainIds.current[target.id];
+        if (!rec) {
           const created = await escrow.createProject({
             budgetEth: 1000,                               // generous cap for the demo
             planLabel: target.id,
             ndviThreshold: Math.min(1000, target.target),  // forest target as NDVI x1000
             authority: me,                                 // the user is the release authority (no AI)
           });
-          pid = created.id;
-          chainIds.current[target.id] = pid;
+          rec = { pid: created.id, funded: 0, beneficiarySet: false };
+          chainIds.current[target.id] = rec;
         }
         const onchainEth = Math.min(amt, 0.002); // small real testnet amount the demo wallet can afford
-        const { txHash } = await escrow.fundProject(pid, onchainEth);
+        const { txHash } = await escrow.fundProject(rec.pid, onchainEth);
+        rec.funded = (rec.funded || 0) + onchainEth;
         escrowTx = txHash;
-        console.log(`Naura escrow: funded project ${pid} with ${onchainEth} ETH, tx ${txHash}`);
+        console.log(`Naura escrow: funded project ${rec.pid} with ${onchainEth} ETH, tx ${txHash}`);
         mode = "on-chain (Naura escrow)";
       }
     } catch (e) {
@@ -166,10 +168,35 @@ export default function App() {
   const onCheck = useCallback(async () => {
     if (custom) return;
     setBusy(true); setMessage("");
+
+    // Real on-chain path: if this forest has a funded escrow project, the user (the project authority)
+    // verifies growth and releases the funds on-chain. The contract enforces the NDVI threshold.
+    const rec = chainIds.current[target.id];
+    if (escrow.isConfigured() && rec && rec.funded > 0) {
+      try {
+        if (!rec.beneficiarySet) {
+          await escrow.setBeneficiary(rec.pid, ORG_ADDRESS);
+          rec.beneficiarySet = true;
+        }
+        const ndvi = Math.min(1000, target.target);
+        const { txHash } = await escrow.release(rec.pid, rec.funded, ndvi);
+        const released = rec.funded; rec.funded = 0;
+        setForests((prev) => prev.map((x) =>
+          x.id === target.id
+            ? { ...x, health: Math.min(x.target, x.health + 2), setAside: Math.max(0, x.setAside - released), paid: x.paid + released }
+            : x));
+        setMessage(`Growth verified on-chain — <strong>${released} ETH</strong> released to the planters · ` +
+          `<a href="https://sepolia.etherscan.io/tx/${txHash}" target="_blank" rel="noopener">view tx ↗</a>`);
+        setBusy(false);
+        return;
+      } catch (e) {
+        console.warn("On-chain release failed, falling back:", e);
+      }
+    }
+
+    // Fallback: swarm over WebSocket (if configured), else local simulation.
     try {
-      // Real path: the swarm streams logs/NDVI/release over WebSocket.
       await swarm.runScan(target.id);
-      // busy is cleared by onRelease (or the safety effect below).
     } catch (e) {
       console.warn("Swarm unreachable, using simulation:", e);
       await simulatedCheck();
