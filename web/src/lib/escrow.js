@@ -7,7 +7,8 @@
 import { BrowserProvider, Contract, parseEther, id } from "ethers";
 import abi from "./naura-escrow-abi.json";
 
-const ADDRESS = import.meta.env.VITE_ESCROW_ADDRESS || "";
+// Defaults to the live Sepolia deployment so the app connects out of the box; override via VITE_ESCROW_ADDRESS.
+const ADDRESS = import.meta.env.VITE_ESCROW_ADDRESS || "0xAB313b7dF91Fad2C169c5D592a7c1c45CD4c84d0";
 const COUNTRY_DEFAULT = "0x0000";
 
 /** True when an address is configured and an injected wallet is available. */
