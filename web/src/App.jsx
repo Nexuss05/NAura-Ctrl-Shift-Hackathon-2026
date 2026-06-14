@@ -8,6 +8,7 @@ import { Globe, Leaf } from "./Icons.jsx";
 import { FORESTS, goalProgress, fmt } from "./data.js";
 import { bridge, bridgeReachable } from "./lib/bridge.js";
 import { useSwarm } from "./hooks/useSwarm.js";
+import * as escrow from "./lib/escrow.js";
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const smooth = () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -27,6 +28,7 @@ export default function App() {
 
   const [account, setAccount] = useState(null);     // connected wallet (from Header)
   const sessionReady = useRef(false);               // bridge keys + session prepared
+  const chainIds = useRef({});                       // forest id -> on-chain Naura project id
 
   const globeRef = useRef(null);
   const panelRef = useRef(null);
@@ -95,6 +97,30 @@ export default function App() {
       console.warn("Bridge call failed, using simulation:", e);
     }
 
+    // Best-effort: also escrow on-chain via the Naura EVM contract when configured (see ../evm).
+    // Guarded by isConfigured() + try/catch so the simulated demo is never affected.
+    try {
+      if (escrow.isConfigured() && !custom) {
+        const me = account || (await escrow.connectedAddress());
+        let pid = chainIds.current[target.id];
+        if (pid === undefined) {
+          const created = await escrow.createProject({
+            budgetEth: 1000,                               // generous cap for the demo
+            planLabel: target.id,
+            ndviThreshold: Math.min(1000, target.target),  // forest target as NDVI x1000
+            authority: me,                                 // the user is the release authority (no AI)
+          });
+          pid = created.id;
+          chainIds.current[target.id] = pid;
+        }
+        const { txHash } = await escrow.fundProject(pid, amt);
+        console.log(`Naura escrow: funded project ${pid} with ${amt} ETH, tx ${txHash}`);
+        mode = "on-chain (Naura escrow)";
+      }
+    } catch (e) {
+      console.warn("Naura escrow call failed, continuing with existing flow:", e);
+    }
+
     if (!custom) {
       setForests((prev) => prev.map((f) => (f.id === target.id ? { ...f, setAside: f.setAside + amt } : f)));
       setSupported((prev) => {
@@ -108,7 +134,7 @@ export default function App() {
         `${target.lat.toFixed(2)}°, ${target.lng.toFixed(2)}°. Our team will plan the planting.`);
     }
     setBusy(false);
-  }, [amount, custom, target, privacy, ensureSession]);
+  }, [amount, custom, target, privacy, ensureSession, account]);
 
   // ---- Satellite check → swarm consensus → release -----------------------
   const simulatedCheck = useCallback(async () => {
