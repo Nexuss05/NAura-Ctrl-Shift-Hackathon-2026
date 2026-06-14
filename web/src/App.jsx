@@ -82,6 +82,7 @@ export default function App() {
 
     // Best-effort real EVM bridge call; fall back to the local simulation.
     let mode = "simulated";
+    let escrowTx = null;
     try {
       if (await bridgeReachable()) {
         if (privacy) {
@@ -113,8 +114,10 @@ export default function App() {
           pid = created.id;
           chainIds.current[target.id] = pid;
         }
-        const { txHash } = await escrow.fundProject(pid, amt);
-        console.log(`Naura escrow: funded project ${pid} with ${amt} ETH, tx ${txHash}`);
+        const onchainEth = Math.min(amt, 0.002); // small real testnet amount the demo wallet can afford
+        const { txHash } = await escrow.fundProject(pid, onchainEth);
+        escrowTx = txHash;
+        console.log(`Naura escrow: funded project ${pid} with ${onchainEth} ETH, tx ${txHash}`);
         mode = "on-chain (Naura escrow)";
       }
     } catch (e) {
@@ -127,7 +130,9 @@ export default function App() {
         const ex = prev[target.id];
         return { ...prev, [target.id]: { given: (ex?.given || 0) + amt, healthAtJoin: ex?.healthAtJoin ?? target.health } };
       });
-      setMessage(""); // confirmation lives in the "locked safely" block
+      setMessage(escrowTx
+        ? `Real on-chain escrow: <strong>${Math.min(amt, 0.002)} ETH</strong> locked on Sepolia · <a href="https://sepolia.etherscan.io/tx/${escrowTx}" target="_blank" rel="noopener">view tx ↗</a>`
+        : ""); // simulated: confirmation lives in the "locked safely" block
     } else {
       const how = privacy ? " privately" : "";
       setMessage(`Thank you. <strong>${fmt(amt)} ETH</strong> is pledged${how} (${mode}) for a new project at ` +
