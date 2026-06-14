@@ -105,6 +105,7 @@ Migration of the *"Give privately"* flow from the public core SDK to the v2 SDK 
 
 Naura targets three cash bounties at ctrl/shift Hackathon 2026 — see [`BOUNTIES.md`](BOUNTIES.md):
 
-- 🦾 **Blockchain for Good Alliance** — Web3 for environmental impact + on-chain transparency
-- 🕶️ **0xbow Privacy Pools** — a UI on top of Privacy Pools (private donations)
-- 🧪 **SiteLab** — best landing page / website
+- **Blockchain for Good Alliance** — Web3 for environmental impact + on-chain transparency
+- **0xbow Privacy Pools** — a UI on top of Privacy Pools (private donations)
+- **SiteLab** — best landing page / website
+- **Mood Global Services** - best innovative AI use case
