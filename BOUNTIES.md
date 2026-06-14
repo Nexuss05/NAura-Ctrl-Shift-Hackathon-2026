@@ -11,7 +11,7 @@ Privacy Pools. Everything runs live on the **Ethereum Sepolia** testnet.
 
 ---
 
-## 🦾 Blockchain for Good Alliance — AI or Web3 Tools for GOOD
+## Blockchain for Good Alliance — AI or Web3 Tools for GOOD
 
 Naura uses blockchain as a **force for real-world environmental impact**: it makes climate
 funding *accountable* by paying only for **proven** reforestation, not promises.
@@ -20,10 +20,10 @@ funding *accountable* by paying only for **proven** reforestation, not promises.
 
 | Value | How Naura delivers it |
 |---|---|
-| 🌍 **Social & environmental impact** | Channels capital into reforestation and releases it only when satellite-measured forest health (NDVI) actually improves — money follows real ecological outcomes, not pledges. |
-| 🔗 **Transparency & accountability** | Every donation, every release, and the NDVI threshold are **on-chain and publicly auditable**. No donor has to trust an intermediary — they can verify the escrow on Etherscan. |
-| ⚙️ **Open collaboration & interoperability** | Open-source EVM contracts (OpenZeppelin `Ownable` + `ReentrancyGuard`), standard ERC-style flows, and an optional privacy layer via 0xbow Privacy Pools. Anyone can fund, anyone can verify. |
-| 💡 **Scalable & sustainable** | One contract supports many projects, multi-donor funding up to a budget cap, milestone-based releases, refunds on cancellation, and an emergency safety valve — a reusable funding rail for any pay-on-proof environmental program. |
+| **Social & environmental impact** | Channels capital into reforestation and releases it only when satellite-measured forest health (NDVI) actually improves — money follows real ecological outcomes, not pledges. |
+| **Transparency & accountability** | Every donation, every release, and the NDVI threshold are **on-chain and publicly auditable**. No donor has to trust an intermediary — they can verify the escrow on Etherscan. |
+| **Open collaboration & interoperability** | Open-source EVM contracts (OpenZeppelin `Ownable` + `ReentrancyGuard`), standard ERC-style flows, and an optional privacy layer via 0xbow Privacy Pools. Anyone can fund, anyone can verify. |
+| **Scalable & sustainable** | One contract supports many projects, multi-donor funding up to a budget cap, milestone-based releases, refunds on cancellation, and an emergency safety valve — a reusable funding rail for any pay-on-proof environmental program. |
 
 **The core problem it solves:** climate philanthropy suffers from a verification gap — funds
 are paid out before impact is proven. Naura closes that gap by making **proof of growth** the
@@ -35,7 +35,7 @@ on-chain trigger for payment.
 
 ---
 
-## 🕶️ 0xbow.io — Build a UI on top of Privacy Pools v2
+## 0xbow.io — Build a UI on top of Privacy Pools v2
 
 Naura's **"Give privately"** option lets a donor shield their contribution through 0xbow
 Privacy Pools, so the donation amount and link to the donor are not exposed on-chain — while
@@ -49,12 +49,18 @@ the funds still reach the reforestation project.
 
 ---
 
-## 🧪 SiteLab — Best landing page / website
+## SiteLab — Best landing page / website
 
 The Naura web app is a polished, production-grade product experience:
 - Interactive 3D globe to pick a forest or drop a custom site
 - Before/after satellite imagery comparison
 - One-click wallet connect with automatic Sepolia network switching
 - Real on-chain pledges and releases with live Etherscan links
+
+---
+
+## Mood Global Services - Best innovative AI use case
+
+We believe AI will play an increasingly central role in how we navigate everyday decisions and complex systems alike. Where it made sense within NAura, we looked for ways to integrate AI-driven support. We think that the future of impactful technology is not just blockchain or AI, it is both working together.
 
 Live: https://naura.pages.dev
