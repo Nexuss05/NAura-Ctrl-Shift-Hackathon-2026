@@ -6,6 +6,19 @@ Instead of relying on corruptible human audits or tedious manual reports, NAura 
 
 ---
 
+## ✅ Live on-chain right now (Ethereum Sepolia)
+
+> The escrow + Privacy Pools below are **deployed and verified on Sepolia**. The AI-swarm / Solana narrative
+> is the broader product vision; the **working on-chain implementation shipped in this branch
+> (`qiang/evm-escrow`) is EVM / Sepolia.**
+
+- **Naura escrow:** [`0xAB31…84d0`](https://sepolia.etherscan.io/address/0xAB313b7dF91Fad2C169c5D592a7c1c45CD4c84d0) — Solidity, **14/14 tests**, full create→fund→release run on-chain (`evm/`).
+- **0xbow Privacy Pools, self-deployed:** Entrypoint [`0xC02b…c8CB`](https://sepolia.etherscan.io/address/0xC02b4350223dB390F87DbeCa86b823fE6dBBc8CB) · ETH Pool [`0xECe9…21E4`](https://sepolia.etherscan.io/address/0xECe9272a220237D2426Fd3494585DBa2368421E4) · **real shielded deposit** ([tx](https://sepolia.etherscan.io/tx/0x7d81ceca0e6632c86bd542361f97122bbe7704ef1e6d4d7ac5d4cb118903bdde)) (`evm/privacy-pools/`).
+- **Live frontend:** https://naura.pages.dev (Cloudflare Pages).
+- **Status:** escrow ✅ · Privacy Pools deploy ✅ · shielded deposit ✅ · shielded withdrawal ⛔ (blocked on an SDK circuit-version integrity pin — see `evm/privacy-pools/README.md`).
+
+---
+
 ## 🌟 Key Features
 
 1. **AI Swarm Consensus Protocol**:
@@ -14,8 +27,8 @@ Instead of relying on corruptible human audits or tedious manual reports, NAura 
    * **Treasurer Agent (Transaction Signer)**: Formulates, signs, and broadcasts conditional transactions to release locked escrow funds.
 2. **Account Abstraction for NGOs**:
    * The receiving wallet is a Program Derived Address (PDA) derived from the project coordinate/ID on Solana. Receiving NGOs don't need to manage seed phrases or private keys — the contract releases funds directly when impact is proven.
-3. **zk-Privacy Funding Layer (Privacy Pools v2)**:
-   * Integrates the `@privacy-pools-v2/sdk` protocol framework to allow anonymous donors to fund climate projects. Donors deposit ETH into Sepolia privacy pools, derive secret keys via EIP-712 signatures, and send private ZK transfers to project escrows without revealing their identity.
+3. **zk-Privacy Funding Layer (0xbow Privacy Pools)**:
+   * Integrates **0xbow Privacy Pools** via the public, audited `@0xbow/privacy-pools-core-sdk`. We **self-deployed the full Privacy Pools stack to Sepolia** and made a **real shielded deposit** on-chain; anonymous donors fund climate projects privately (deposit → shielded note → withdraw to the escrow). Code, deployed addresses and a reproduction guide are in **`evm/privacy-pools/`**.
 4. **Interactive 3D Globe Dashboard**:
    * Rich HUD showing active project statistics, real-time transaction explorers, Sentinel-2 before/after vegetation sliders, and a scrolling typewriter terminal printing swarm logs.
 
