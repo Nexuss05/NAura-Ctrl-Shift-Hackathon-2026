@@ -1,10 +1,10 @@
 /**
- * Naura devnet live demo (single funded wallet, tiny real transactions, prints Explorer links).
+ * Naura devnet live demo — user-controlled escrow (single funded wallet, tiny real transactions,
+ * prints Explorer links).
  *
- * Difference from the localnet demo: the devnet faucet is unreliable -> no airdrops; one already-funded
- * wallet acts as operator/admin/funder/fee payer, and the agent is a generated keypair (only signs, never
- * pays). Tiny budget (0.2 SOL), and each transaction prints an https://explorer.solana.com link so judges
- * can verify the on-chain activity live.
+ * No AI, no autonomous agent: one already-funded wallet acts as operator/admin/funder/fee payer AND
+ * the release authority — a human approves every payout. Tiny budget (0.2 SOL), and each transaction
+ * prints an https://explorer.solana.com link so judges can verify the on-chain activity live.
  *
  * Prereq:
  *   1) the program is deployed to devnet (anchor deploy --provider.cluster devnet)
@@ -13,6 +13,7 @@
  */
 import { readFileSync } from "fs";
 import { homedir } from "os";
+import { createHash } from "crypto";
 import * as anchor from "@anchor-lang/core";
 import {
   makeProgram,
@@ -27,14 +28,25 @@ import {
   sol,
   BN,
   Keypair,
-} from "../agent/naura";
-import { getRecommendation, recommendationHash } from "../agent/recommender";
-import { SimulatedNdviOracle } from "../agent/ndvi";
+} from "../src/naura";
+import { SimulatedNdviOracle } from "../src/ndvi";
 
 const FEE_BPS = 50;
 const RPC = process.env.ANCHOR_PROVIDER_URL || "https://api.devnet.solana.com";
 const WALLET = process.env.WALLET || `${homedir()}/.config/solana/id.json`;
 const BUDGET_SOL = Number(process.env.BUDGET_SOL || 0.2);
+
+// What the user picked in the app.
+const PLAN = {
+  beneficiaryOrgName: "Amazon Basin Reforestation Trust",
+  ndviThresholdScaled: 300,
+  milestones: [
+    { label: "Seedling planting & registration", fraction: 0.4 },
+    { label: "6-month survival verification", fraction: 0.35 },
+    { label: "12-month canopy verification", fraction: 0.25 },
+  ],
+};
+const planHash = (): number[] => Array.from(createHash("sha256").update(JSON.stringify(PLAN)).digest());
 
 const exTx = (sig: string) => `https://explorer.solana.com/tx/${sig}?cluster=devnet`;
 const exAddr = (a: string) => `https://explorer.solana.com/address/${a}?cluster=devnet`;
@@ -50,10 +62,8 @@ async function main() {
   if (bal < 0.4 * 1e9) {
     throw new Error(`insufficient balance (need >= ~0.5 SOL). Fund the address above at https://faucet.solana.com and retry.`);
   }
-  const agent = Keypair.generate(); // only signs; wallet pays fees
   const beneficiary = Keypair.generate();
   const feeTreasury = Keypair.generate();
-  console.log("agent:", agent.publicKey.toBase58());
 
   const program = makeProgram(connection, wallet);
 
@@ -65,9 +75,8 @@ async function main() {
     console.log("Config already exists (reusing).");
   }
 
-  hr("2. Main AI recommendation (Claude Code, falls back to local)");
-  const rec = await getRecommendation({ region: "Amazon Basin", countryCode: "BR", budgetSol: BUDGET_SOL });
-  console.log(`source: ${rec.source}  beneficiary org: ${rec.beneficiaryOrgName}  NDVI threshold: ${rec.ndviThresholdScaled / 1000}`);
+  hr("2. The user chooses the plan (org / threshold / milestones)");
+  console.log(`beneficiary org: ${PLAN.beneficiaryOrgName}  NDVI threshold: ${PLAN.ndviThresholdScaled / 1000}`);
 
   hr("3. Create project + escrow (real on-chain transactions)");
   const projectId = new BN(Date.now());
@@ -76,35 +85,35 @@ async function main() {
     projectId,
     countryCode: [0x42, 0x52],
     budget,
-    recommendationHash: recommendationHash(rec),
-    ndviThreshold: new BN(rec.ndviThresholdScaled),
-    agentAuthority: agent.publicKey,
+    recommendationHash: planHash(),
+    ndviThreshold: new BN(PLAN.ndviThresholdScaled),
+    agentAuthority: wallet.publicKey, // the user (this wallet) is the release authority
   });
   console.log("project:", exAddr(project.toBase58()));
   const fundSig = await fundProject(program, wallet, project, budget); // single contributor escrows the full budget
   console.log(`escrowed ${BUDGET_SOL} SOL -> ${exTx(fundSig)}`);
 
-  hr("4. Agent releases by NDVI (real on-chain transactions)");
-  const sbSig = await setBeneficiary(program, agent, project, beneficiary.publicKey);
+  hr("4. The user approves releases by NDVI (real on-chain transactions)");
+  const sbSig = await setBeneficiary(program, wallet, project, beneficiary.publicKey);
   console.log(`set_beneficiary -> ${exTx(sbSig)}`);
-  const ndvi = new SimulatedNdviOracle(250, 120);
-  const threshold = rec.ndviThresholdScaled;
+  const ndviFeed = new SimulatedNdviOracle(250, 120);
+  const threshold = PLAN.ndviThresholdScaled;
   let checkpoint = 0;
-  for (let i = 0; i < rec.milestones.length; i++) {
+  for (let i = 0; i < PLAN.milestones.length; i++) {
     const p = await fetchProject(program, project);
     const remaining = (p.budget as any).sub(p.released);
     if (remaining.lten(0)) break;
     let amount =
-      i === rec.milestones.length - 1
+      i === PLAN.milestones.length - 1
         ? remaining
-        : budget.muln(Math.round(rec.milestones[i].fraction * 10000)).divn(10000);
+        : budget.muln(Math.round(PLAN.milestones[i].fraction * 10000)).divn(10000);
     if (amount.gt(remaining)) amount = remaining;
-    let reading = ndvi.read(checkpoint);
+    let reading = ndviFeed.read(checkpoint);
     while (reading < threshold && checkpoint < 24) {
       checkpoint++;
-      reading = ndvi.read(checkpoint);
+      reading = ndviFeed.read(checkpoint);
     }
-    const sig = await release(program, agent, project, {
+    const sig = await release(program, wallet, project, {
       amount,
       ndviDelta: new BN(reading),
       beneficiary: beneficiary.publicKey,
