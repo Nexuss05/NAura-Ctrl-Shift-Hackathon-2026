@@ -1,0 +1,23 @@
+{
+  "name": "naura-anchor",
+  "license": "ISC",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --import tsx ./node_modules/mocha/bin/_mocha --extension ts -t 1000000 'tests/**/*.ts'"
+  },
+  "dependencies": {
+    "@anchor-lang/core": "^1.0.2",
+    "@solana/web3.js": "^1.95.3",
+    "bn.js": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.0",
+    "@types/chai": "^4.3.0",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^20.11.0",
+    "chai": "^4.3.4",
+    "mocha": "^9.0.3",
+    "tsx": "^4.22.4",
+    "typescript": "^5.7.3"
+  }
+}
