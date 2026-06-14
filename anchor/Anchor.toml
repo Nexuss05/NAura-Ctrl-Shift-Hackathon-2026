@@ -1,19 +1,31 @@
+[toolchain]
+package_manager = "npm"
+
 [features]
-seeds = false
+resolution = true
 skip-lint = false
 
+# Same program id declared for both clusters; switch at deploy time with --provider.cluster.
 [programs.localnet]
-naura_escrow = "NAura1111111111111111111111111111111111111"
+naura = "6WngBHVPBX2y27UxP6epeY1LkkYR7afM4MiYoCCa13MF"
 
 [programs.devnet]
-naura_escrow = "NAura1111111111111111111111111111111111111"
+naura = "6WngBHVPBX2y27UxP6epeY1LkkYR7afM4MiYoCCa13MF"
 
-[registry]
-url = "https://api.apr.dev"
-
+# Default provider = localnet; devnet deploy: --provider.cluster devnet --provider.wallet ~/.config/solana/id.json
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "yarn run mocha -t 1000000 tests/"
+test = "node --import tsx ./node_modules/mocha/bin/_mocha --extension ts -t 1000000 'tests/**/*.ts'"
+
+# Local port 8000 is occupied here; give the legacy validator a free dynamic port range (applies to anchor test --validator legacy).
+[test]
+startup_wait = 30000
+
+[test.validator]
+rpc_port = 8899
+dynamic_port_range = "9200-9230"
+
+[hooks]
