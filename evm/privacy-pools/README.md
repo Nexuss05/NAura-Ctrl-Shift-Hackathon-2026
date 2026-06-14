@@ -21,13 +21,14 @@ Owner + ASP postman: the deployer wallet. Min deposit 0.001 ETH; 1% vetting fee.
   `hashPrecommitment` → `Entrypoint.deposit`.
 - **ASP root posting** — as the postman, `Entrypoint.updateRoot()` publishes the association-set root.
 
-## Not finished yet ⛔
-- **Shielded withdrawal** (`withdraw.mjs`) — posts the ASP root and builds the proof inputs, but the SDK
-  enforces a SHA-256 integrity check that pins 0xbow's mainnet circuit-artifact version. Our self-deployed
-  verifier was compiled from this repo's circuit version, so the SDK refuses to load our (matching)
-  artifacts. We did **not** disable that integrity check — it is a real supply-chain security control.
-  To finish: generate the proof directly with `snarkjs` + our own artifacts (no SDK bypass), or redeploy a
-  verifier matching the SDK's pinned version.
+## In progress 🔧
+- **Shielded withdrawal** (`withdraw.mjs`) — posts the ASP root (postman), builds the 16 circuit signals
+  exactly like the SDK, and **generates the withdrawal ZK proof directly with `snarkjs` + our own
+  artifacts** (the SDK's loader pins 0xbow's mainnet artifact hashes and refuses ours; we did **not**
+  disable that integrity control — we call snarkjs directly with the correct artifacts for our own pool).
+  Proof generation and tx submission succeed; the on-chain `withdraw` reverts with `InvalidProof()` — a
+  final public-signal / verifier-vs-proving-key alignment issue still being traced. The full
+  deposit → withdraw round-trip is the remaining work.
 
 ## Reproduce
 ```bash

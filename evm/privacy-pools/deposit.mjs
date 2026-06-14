@@ -15,7 +15,7 @@ const POOL = "0xECe9272a220237D2426Fd3494585DBa2368421E4";
 const KEY = process.env.PK;
 // fixed testnet mnemonic so the note is reproducible for the later withdrawal
 const MNEMONIC = "legal winner thank year wave sausage worth useful legal winner thank yellow";
-const NONCE = 0n;
+const NONCE = BigInt(process.env.NONCE || 0);
 
 const sdk = new PrivacyPoolSDK(new Circuits({ browser: false }));
 const contracts = sdk.createContractInstance(RPC, sepolia, ENTRYPOINT, KEY);
