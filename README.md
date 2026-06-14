@@ -26,21 +26,26 @@ Instead of relying on corruptible human audits or tedious manual reports, NAura 
 The codebase is split into modular components:
 
 ```text
-├── index.html                  # Main dashboard layout
-├── styles.css                  # Custom glassmorphic styles
-├── model.js                    # [MVVM Model] Application data structures & state
-├── viewmodel.js                # [MVVM ViewModel] UI commands, WS connections
-├── view.js                     # [MVVM View] DOM listeners, slide sliders & Globe.gl
+├── web/                        # ⭐ PRIMARY FRONTEND — React donation TOOL (Vite)
+│   ├── src/
+│   │   ├── App.jsx             # State owner + tool composition + backend wiring
+│   │   ├── lib/bridge.js       # REST client for the EVM bridge (:3001)
+│   │   ├── hooks/useSwarm.js   # WebSocket client for the swarm (:8000)
+│   │   └── components/         # Header (logo+wallet), Globe, FundingPanel, SwarmConsole…
+│   ├── .env.example            # VITE_BRIDGE_URL / VITE_SWARM_URL
+│   └── HANDOFF.md              # Full frontend + integration handoff (read this)
+├── sitelab_landing.html        # Marketing LANDING (built on SiteLab; separate from the tool)
+├── index.html / model.js / view.js / viewmodel.js / styles.css  # Legacy MVVM console (kept)
 ├── WALLETS_SETUP.md            # Detailed EVM / Solana setup tutorial guide
 ├── anchor/                     # Solana Anchor contract folder
 │   ├── programs/naura-escrow/  # Rust source code (initialize, deposit, release_funds)
 │   └── Anchor.toml             # Anchor configuration settings
-├── pp-bridge/                  # Node.js Express ZK Privacy Pool payment bridge
+├── pp-bridge/                  # Node.js Express ZK Privacy Pool payment bridge (:3001)
 │   ├── server.js               # Express API endpoints & 0xBow SDK integration
 │   ├── secretDerivationPayload.js # EIP-712 typed key derivation signature configuration
 │   ├── .env                    # Sepolia private RPC & testnet wallet variables
 │   └── package.json            # Node dependencies (viem, express, 0xbow-sdk)
-└── backend/                    # Python Swarm Agent services
+└── backend/                    # Python Swarm Agent services (:8000)
     ├── requirements.txt        # Backend dependencies
     ├── ndvi_calculator.py      # Sentinel-2 B4/B8 band NDVI raster math (rasterio)
     ├── treasurer_agent.py      # Solana Devnet transaction signer & client
@@ -48,59 +53,88 @@ The codebase is split into modular components:
     └── generate_sample_tiles.py# Utility to generate mock Sentinel-2 TIFF data
 ```
 
+> **Two frontends:** the **landing page** is built on **SiteLab** (required for
+> the hackathon) and the React app in **`web/`** is the **tool** the landing's
+> "Start planting" links into. The root `index.html` MVVM console is legacy.
+> All current frontend work happens in `web/` — see [`web/HANDOFF.md`](web/HANDOFF.md).
+
 ---
 
 ## 🚀 Getting Started & How to Run
 
-You can run NAura in two modes: **Standalone Sim** (zero-setup) or **Live Swarm** (connected Python backend).
+The primary frontend is the **React tool in `web/`**. It works **with or without**
+the backends: when the bridge/swarm are unreachable it falls back to a built-in
+**simulated** flow, so you can run only `web/` for UI work.
 
-### Option A: Standalone Sim Mode (Fastest)
+### Quick start — Tool only (zero backend, simulated)
 
-No server installation required. Double-click the [index.html](file:///Users/matteocotena/Documents/Hackathon%20CTRL:SHIFT/Github/NAura-Backend/index.html) file directly to launch the console in your web browser. 
+```bash
+cd web
+npm install            # if cache errors: npm install --cache /tmp/naura-npm-cache
+npm run dev            # → http://localhost:5173
+```
+* Pick a forest (globe or quick list) → choose an ETH amount → toggle **Give
+  privately** (Privacy Pools) → **Pledge** → **Verify growth from space**.
+* With no backends running, pledges and the satellite scan run as a local
+  simulation (typewriter swarm logs, NDVI, escrow release).
 
-* The application will run entirely client-side.
-* Clicking **Run Swarm Scan** will execute a simulated typewriter log of the Observer/Auditor/Treasurer consensus, updating the project NDVI, sliding the satellite image, and broadcasting simulated transactions.
-* The Privacy Pools v2 widget allows simulating EIP-712 signatures, deposits, and relay transfers with visual log states.
+### Full stack — Live (EVM bridge + AI swarm)
 
----
+Run three processes (three terminals). Configure endpoints once:
+```bash
+cd web && cp .env.example .env   # VITE_BRIDGE_URL / VITE_SWARM_URL (defaults are fine locally)
+```
 
-### Option B: Live Swarm Mode (AI Swarm + ZK Privacy Pools v2 Bridge)
+**1) EVM Privacy-Pools bridge — `localhost:3001`**
+```bash
+cd pp-bridge
+npm install                      # needs a GitHub token for the private @0xbow-io SDK
+npm run dev                      # real attempt
+# …or run simulated (no SDK / no keys):
+FORCE_SIMULATION=true node server.js
+```
+*Wallets, faucet funding, Sepolia RPC and ZK/direct-deposit config: see [WALLETS_SETUP.md](WALLETS_SETUP.md).*
 
-To run the real Python agent swarm, raster calculations, EVM ZK-Privacy Pool bridge payments, and real Solana devnet transaction signing:
+**2) Solana AI swarm — `localhost:8000`**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r backend/requirements.txt          # full (rasterio needs GDAL; solana)
+# …or the light/simulated set (enough to run the swarm):
+pip install fastapi "uvicorn[standard]" websockets base58 numpy
 
-1. **Setup Python Virtual Environment**:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r backend/requirements.txt
-   ```
+python backend/generate_sample_tiles.py          # optional: mock Sentinel-2 TIFFs in backend/data/
+python backend/agent_swarm.py
+```
 
-2. **Generate Test Satellite Rasters**:
-   Run the utility script to generate mock RED and NIR Sentinel-2 spectral TIFF files in `backend/data/` for local NDVI parser testing:
-   ```bash
-   python backend/generate_sample_tiles.py
-   ```
+**3) Frontend — `localhost:5173`**
+```bash
+cd web && npm run dev
+```
+The tool auto-detects the running bridge/swarm (`mode: "real"` in responses).
+**Pledge** routes through the bridge (private = deposit + ZK transfer; public =
+direct deposit). **Verify growth from space** triggers the real swarm: NDVI
+computation, a Solana devnet release, and live logs streamed into the in-app
+console.
 
-3. **Start the ZK PP-Bridge Node.js Server**:
-   Open a separate terminal window and start the Express server (running on `localhost:3001`):
-   ```bash
-   cd pp-bridge
-   npm install
-   npm run dev
-   ```
-   *Note: Detailed instructions on wallets generation, faucet funding, private Sepolia RPC setups, and ZK/direct-deposit configurations can be found in the [WALLETS_SETUP.md](file:///Users/matteocotena/Documents/Hackathon%20CTRL-SHIFT/Github/NAura-Backend/WALLETS_SETUP.md) playbook.*
+Stop everything: `lsof -tiTCP:3001,8000,5173 | xargs kill`
 
-4. **Start the Swarm Orchestrator**:
-   Launch the WebSockets server on `localhost:8000`:
-   ```bash
-   python backend/agent_swarm.py
-   ```
+> Full frontend + integration details (architecture, contracts, real-vs-simulated
+> matrix): **[`web/HANDOFF.md`](web/HANDOFF.md)**.
 
-5. **Launch Dashboard**:
-   Open [index.html](file:///Users/matteocotena/Documents/Hackathon%20CTRL-SHIFT/Github/NAura-Backend/index.html) in your browser. 
-   * The dashboard will detect the running WebSocket server and the running PP-Bridge server, connecting automatically.
-   * Toggle between **zk-Privacy Pool (Shielded)** and **Public Direct Deposit** modes to execute direct transfers or run ZK signatures, commitments, and relayer operations.
-   * Clicking **Run Swarm Scan** will now trigger the real Python swarm: downloading TIFF data, running `rasterio` NDVI calculations, signing and broadcasting real PDA transactions to Solana Devnet, and streaming live logs back to the frontend.
+### Real vs Simulated (summary)
+
+| | Real | Simulated (default) |
+|---|---|---|
+| Bridge SDK / keys | `@0xbow-io` SDK + `pp-bridge/.env` keys, `FORCE_SIMULATION=false` | SDK/keys absent → mocked txs & balances |
+| NDVI | `rasterio` on real Sentinel-2 tiles | numpy synthetic NDVI |
+| Solana release | real devnet transfer (explorable sig) | mocked signature `5uVq…` |
+| Frontend | bridge/WS reachable → real calls | backends down → local simulation |
+
+### Legacy console (optional)
+
+The original MVVM dashboard still works standalone: open the root `index.html`
+in a browser for a fully client-side simulated demo (globe, swarm log, PP widget).
 
 ---
 
