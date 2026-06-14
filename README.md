@@ -47,6 +47,10 @@ The codebase is split into modular components:
 │   │   └── components/         # Header (logo+wallet), Globe, FundingPanel, SwarmConsole…
 │   ├── .env.example            # VITE_BRIDGE_URL / VITE_SWARM_URL
 │   └── HANDOFF.md              # Full frontend + integration handoff (read this)
+├── evm/                        # ⭐ LIVE on-chain — Solidity escrow + Privacy Pools (Sepolia)
+│   ├── contracts/NauraEscrow.sol  # user-controlled milestone escrow (14/14 tests; deployed 0xAB31…)
+│   ├── test/ + scripts/        # Hardhat tests, deploy script, end-to-end demo
+│   └── privacy-pools/          # 0xbow Privacy Pools — self-deployed addresses + deposit/withdraw scripts
 ├── sitelab_landing.html        # Marketing LANDING (built on SiteLab; separate from the tool)
 ├── index.html / model.js / view.js / viewmodel.js / styles.css  # Legacy MVVM console (kept)
 ├── WALLETS_SETUP.md            # Detailed EVM / Solana setup tutorial guide
