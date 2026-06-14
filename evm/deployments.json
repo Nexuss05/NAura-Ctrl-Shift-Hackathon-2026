@@ -1,0 +1,10 @@
+{
+  "sepolia": {
+    "chainId": 11155111,
+    "NauraEscrow": "0xAB313b7dF91Fad2C169c5D592a7c1c45CD4c84d0",
+    "deployer": "0x66043D5539802CC7B5F979E154C570d1d201Bb1E",
+    "feeBps": 50,
+    "feeTreasury": "0x66043D5539802CC7B5F979E154C570d1d201Bb1E",
+    "explorer": "https://sepolia.etherscan.io/address/0xAB313b7dF91Fad2C169c5D592a7c1c45CD4c84d0"
+  }
+}
