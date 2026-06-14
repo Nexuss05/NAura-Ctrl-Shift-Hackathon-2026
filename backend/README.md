@@ -1,30 +1,35 @@
-# Naura backend — TypeScript Solana agent & demo
+# Naura — backend (TypeScript client & demo)
 
-Off-chain side of Naura. A TypeScript client for the on-chain program (see [`../anchor`](../anchor)),
-an autonomous agent that releases milestone funds when an NDVI threshold is met, and end-to-end demos.
+Off-chain side of Naura: a TypeScript client for the on-chain escrow program (see [`../anchor`](../anchor))
+and end-to-end demos. Naura is a **transparent, user-controlled** reforestation escrow — a human funder
+decides whether and when to release funds to a beneficiary organization. **There is no AI here:** the
+contract enforces the rules (NDVI threshold, budget cap, authority, pause) and a person makes the call.
 
 ## Layout
 ```
 backend/
-├── agent/        TypeScript Solana agent
-│   ├── naura.ts        PDA + instruction client (config/project/vault/contribution)
-│   ├── ndvi.ts         NDVI oracle (simulated; swap for Sentinel-2 later) — i64 ×1000, no floats
-│   ├── recommender.ts  beneficiary/threshold/milestone recommendation (local heuristic + Claude CLI)
-│   ├── agent.ts         milestone driver: set_beneficiary, then release per milestone gated by NDVI
-│   ├── cli.ts          discrete tools (bootstrap/config/status/ndvi/set-beneficiary/release)
-│   └── AGENT.md        playbook: Claude Code acting as the Naura Solana agent
-├── demo/         run-demo.ts (localnet, end-to-end) · run-demo-devnet.ts (tiny amounts + explorer links)
-└── idl/          bundled program IDL + TS types (keeps this package self-contained)
+├── src/
+│   ├── naura.ts   on-chain client — PDAs + instruction wrappers (config / project / vault / contribution)
+│   └── ndvi.ts    NDVI reading helper (simulated; the informational signal the user reviews)
+├── demo/
+│   ├── run-demo.ts          localnet, full flow, operator approves each milestone
+│   └── run-demo-devnet.ts   devnet, tiny real amounts + Explorer links
+└── idl/           bundled program IDL + TS types (self-contained; no anchor build needed)
 ```
 
-> The bundled `idl/` is a committed copy of the contract's build output, so the backend builds and runs
-> without first building the program. After changing the contract, refresh it from `../anchor/target`:
+> The bundled `idl/` is a committed copy of the contract's build output, so the backend runs without
+> first building the program. After changing the contract, refresh it from `../anchor/target`:
 > `cp ../anchor/target/idl/naura.json idl/naura.json && cp ../anchor/target/types/naura.ts idl/naura.ts`.
 
-## The "Solana AI agent" here = Claude Code
-The agent is driven by **Claude Code** through the discrete CLI tools in `agent/cli.ts` (read `agent/AGENT.md`).
-It needs **no paid LLM API key** — the orchestration model is Claude Code itself, calling on-chain tools
-(`status` → `ndvi` → `set-beneficiary` → `release`) and gating releases on the NDVI threshold.
+## Flow
+1. **Admin** initializes the protocol config (fee + treasury).
+2. **Contributors** escrow SOL into a project (multi-party funding, up to the budget).
+3. **The funder/operator** sets the beneficiary org and, milestone by milestone, reviews the NDVI
+   reading and **approves** a release. The contract rejects any release below the NDVI threshold or
+   over budget. When the budget is fully released, the project completes.
+
+The release authority is whoever the project was created with — set it to the user's own wallet so the
+user is the one who approves payouts.
 
 ## Run
 ```bash
@@ -35,14 +40,4 @@ npm run demo
 
 # same flow on devnet with tiny amounts + Explorer links
 npm run demo:devnet
-
-# individual agent tools (Claude Code uses these one at a time)
-npm run agent -- status
-npm run agent -- ndvi
-npm run agent -- release --milestone 0
 ```
-
-## Other backend components
-A Python agent swarm lives alongside this package — `agent_swarm.py`, `treasurer_agent.py`,
-`ndvi_calculator.py`, `generate_sample_tiles.py` (deps in `requirements.txt`). Both target the same
-on-chain program; the TypeScript path above is the one with a runnable end-to-end demo.
