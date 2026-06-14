@@ -1,210 +1,110 @@
-# NAura — Proof-of-Impact Agent Swarm Console
+# Naura — Pay-on-Proof Reforestation Funding
 
-**NAura** is a verified climate finance protocol where payments are automatically unlocked onchain by verified physical evidence in the real world. 
+**Naura** is a climate-funding protocol where donations are held in an on-chain escrow and
+released to a reforestation organization **only when forest growth is verified** (an NDVI
+satellite threshold). Donors can also give **privately** through 0xbow Privacy Pools.
 
-Instead of relying on corruptible human audits or tedious manual reports, NAura uses a multi-agent AI swarm (Observer, Auditor, and Treasurer) to analyze Sentinel-2 satellite imagery, compute ecological indexes (NDVI), and trigger smart contract releases on Solana Devnet.
+Releases are **user-controlled** — the project authority verifies growth and triggers the
+release. There is **no AI and no oracle in the loop**: the donor/authority stays in control,
+and every step is publicly auditable on-chain.
 
----
+Built on **Ethereum (Sepolia testnet)**.
 
-## ✅ Live on-chain right now (Ethereum Sepolia)
-
-> The escrow + Privacy Pools below are **deployed and verified on Sepolia**. The AI-swarm / Solana narrative
-> is the broader product vision; the **working on-chain implementation shipped in this branch
-> (`qiang/evm-escrow`) is EVM / Sepolia.**
-
-- **Naura escrow:** [`0xAB31…84d0`](https://sepolia.etherscan.io/address/0xAB313b7dF91Fad2C169c5D592a7c1c45CD4c84d0) — Solidity, **14/14 tests**, full create→fund→release run on-chain (`evm/`).
-- **0xbow Privacy Pools, self-deployed:** Entrypoint [`0xDd70…275f`](https://sepolia.etherscan.io/address/0xDd70ef8B8965962c3695E193a2D9A44a3D03275f) · ETH Pool [`0xbC87…6976`](https://sepolia.etherscan.io/address/0xbC876a3208dcAa6A86b71C74Bed0c9e0D3086976) · **full deposit → shielded → withdraw round-trip** ([withdraw tx](https://sepolia.etherscan.io/tx/0x17600f517402b907b75bc97a2bfb02a453ab46a3e62bb70e25c86730d10861a9)) (`evm/privacy-pools/`).
-- **Live frontend:** https://naura.pages.dev (Cloudflare Pages).
-- **Status:** escrow ✅ · Privacy Pools deploy ✅ · shielded deposit ✅ · **shielded withdrawal ✅ (full round-trip on-chain)** — see `evm/privacy-pools/`.
+- 🌐 Live app: https://naura.pages.dev
+- ⛓️ Network: Sepolia (chainId `11155111`) · explorer https://sepolia.etherscan.io
 
 ---
 
-## 🌟 Key Features
+## ✅ Live on-chain right now
 
-1. **AI Swarm Consensus Protocol**:
-   * **Observer Agent (GPT-4o Vision)**: Scans satellite coordinates and computes average vegetative index (NDVI).
-   * **Auditor Agent (Adversarial Auditor)**: Challenges claims, composite cloud covers, and issues cryptographic verification verdicts.
-   * **Treasurer Agent (Transaction Signer)**: Formulates, signs, and broadcasts conditional transactions to release locked escrow funds.
-2. **Account Abstraction for NGOs**:
-   * The receiving wallet is a Program Derived Address (PDA) derived from the project coordinate/ID on Solana. Receiving NGOs don't need to manage seed phrases or private keys — the contract releases funds directly when impact is proven.
-3. **zk-Privacy Funding Layer (0xbow Privacy Pools)**:
-   * Integrates **0xbow Privacy Pools** via the public, audited `@0xbow/privacy-pools-core-sdk`. We **self-deployed the full Privacy Pools stack to Sepolia** and made a **real shielded deposit** on-chain; anonymous donors fund climate projects privately (deposit → shielded note → withdraw to the escrow). Code, deployed addresses and a reproduction guide are in **`evm/privacy-pools/`**.
-4. **Interactive 3D Globe Dashboard**:
-   * Rich HUD showing active project statistics, real-time transaction explorers, Sentinel-2 before/after vegetation sliders, and a scrolling typewriter terminal printing swarm logs.
+- **Naura escrow:** [`0xAB31…84d0`](https://sepolia.etherscan.io/address/0xAB313b7dF91Fad2C169c5D592a7c1c45CD4c84d0) — Solidity, **14/14 tests**, full create→fund→release on-chain (`evm/`).
+- **0xbow Privacy Pools (self-deployed):** Entrypoint [`0xDd70…275f`](https://sepolia.etherscan.io/address/0xDd70ef8B8965962c3695E193a2D9A44a3D03275f) · ETH Pool [`0xbC87…6976`](https://sepolia.etherscan.io/address/0xbC876a3208dcAa6A86b71C74Bed0c9e0D3086976) — full **deposit → shielded → withdraw** round-trip (tx hashes in `evm/privacy-pools/`).
+- **Status:** escrow ✅ · Privacy Pools deploy ✅ · shielded deposit ✅ · shielded withdraw ✅
 
 ---
 
-## 📂 Project Architecture
+## 🌟 Features
 
-The codebase is split into modular components:
+1. **User-controlled milestone escrow** — create a project, fund it (multi-donor, up to a budget
+   cap), and release funds gated by the on-chain NDVI reading. Refunds on cancellation, plus
+   pause + emergency withdraw as safety valves. No AI — the project authority decides.
+2. **Private donations (0xbow Privacy Pools)** — *"Give privately"* runs a **real client-side
+   shielded deposit** (no custodial backend); the donor's own wallet interacts with the pool.
+3. **Real wallet UX** — one-click connect, **automatic Sepolia network switch**, and real
+   pledges + releases with live Etherscan links — for both preset forests and **custom map
+   locations** you drop on the globe.
+4. **Interactive 3D globe** — pick a forest or drop a custom site; before/after Sentinel-2
+   vegetation comparison.
+
+---
+
+## 📂 Architecture
 
 ```text
-├── web/                        # ⭐ PRIMARY FRONTEND — React donation TOOL (Vite)
-│   ├── src/
-│   │   ├── App.jsx             # State owner + tool composition + backend wiring
-│   │   ├── lib/bridge.js       # REST client for the EVM bridge (:3001)
-│   │   ├── hooks/useSwarm.js   # WebSocket client for the swarm (:8000)
-│   │   └── components/         # Header (logo+wallet), Globe, FundingPanel, SwarmConsole…
-│   ├── .env.example            # VITE_BRIDGE_URL / VITE_SWARM_URL
-│   └── HANDOFF.md              # Full frontend + integration handoff (read this)
-├── evm/                        # ⭐ LIVE on-chain — Solidity escrow + Privacy Pools (Sepolia)
-│   ├── contracts/NauraEscrow.sol  # user-controlled milestone escrow (14/14 tests; deployed 0xAB31…)
-│   ├── test/ + scripts/        # Hardhat tests, deploy script, end-to-end demo
-│   └── privacy-pools/          # 0xbow Privacy Pools — self-deployed addresses + deposit/withdraw scripts
-├── sitelab_landing.html        # Marketing LANDING (built on SiteLab; separate from the tool)
-├── index.html / model.js / view.js / viewmodel.js / styles.css  # Legacy MVVM console (kept)
-├── WALLETS_SETUP.md            # Detailed EVM / Solana setup tutorial guide
-├── anchor/                     # Solana Anchor contract folder
-│   ├── programs/naura-escrow/  # Rust source code (initialize, deposit, release_funds)
-│   └── Anchor.toml             # Anchor configuration settings
-├── pp-bridge/                  # Node.js Express ZK Privacy Pool payment bridge (:3001)
-│   ├── server.js               # Express API endpoints & 0xBow SDK integration
-│   ├── secretDerivationPayload.js # EIP-712 typed key derivation signature configuration
-│   ├── .env                    # Sepolia private RPC & testnet wallet variables
-│   └── package.json            # Node dependencies (viem, express, 0xbow-sdk)
-└── backend/                    # Python Swarm Agent services (:8000)
-    ├── requirements.txt        # Backend dependencies
-    ├── ndvi_calculator.py      # Sentinel-2 B4/B8 band NDVI raster math (rasterio)
-    ├── treasurer_agent.py      # Solana Devnet transaction signer & client
-    ├── agent_swarm.py          # FastAPI/WebSocket orchestrator (port 8000)
-    └── generate_sample_tiles.py# Utility to generate mock Sentinel-2 TIFF data
+web/                          # ⭐ The app — React + Vite. Client-side; talks directly to Sepolia
+│   src/lib/escrow.js         #   ethers client for NauraEscrow (create/fund/release)
+│   src/lib/privacypool.js    #   client-side 0xbow Privacy Pools shielded deposit
+│   src/lib/wallet.js         #   single wallet-connect entry + automatic Sepolia switch
+│   src/components/           #   Header (logo + wallet), Globe, FundingPanel, satellite compare…
+evm/                          # ⭐ Live on-chain — Solidity escrow + Privacy Pools (Sepolia)
+│   contracts/NauraEscrow.sol #   user-controlled milestone escrow (14/14 tests; deployed 0xAB31…)
+│   test/ + scripts/          #   Hardhat tests, deploy, end-to-end demo
+│   privacy-pools/            #   0xbow Privacy Pools — deployed addresses + deposit/withdraw scripts
+BOUNTIES.md                   # Bounty submissions (Blockchain for Good, 0xbow, SiteLab)
+web/.npmrc.example            # Registry config for the Privacy Pools v2 SDK (token via env var)
 ```
 
-> **Two frontends:** the **landing page** is built on **SiteLab** (required for
-> the hackathon) and the React app in **`web/`** is the **tool** the landing's
-> "Start planting" links into. The root `index.html` MVVM console is legacy.
-> All current frontend work happens in `web/` — see [`web/HANDOFF.md`](web/HANDOFF.md).
+> The current Naura flow is **EVM-only and user-controlled (no AI)**. Earlier Solana / AI-swarm
+> scaffolding (`anchor/`, `backend/`, `pp-bridge/`) remains in the repo for history but is **not**
+> part of the shipped flow.
 
 ---
 
-## 🚀 Getting Started & How to Run
+## 🚀 Run it
 
-The primary frontend is the **React tool in `web/`**. It works **with or without**
-the backends: when the bridge/swarm are unreachable it falls back to a built-in
-**simulated** flow, so you can run only `web/` for UI work.
-
-### Quick start — Tool only (zero backend, simulated)
+The app is **client-side — no backend required**. It connects directly to Sepolia through the
+user's wallet.
 
 ```bash
 cd web
-npm install            # if cache errors: npm install --cache /tmp/naura-npm-cache
-npm run dev            # → http://localhost:5173
+npm install
+npm run dev        # → http://localhost:5173
 ```
-* Pick a forest (globe or quick list) → choose an ETH amount → toggle **Give
-  privately** (Privacy Pools) → **Pledge** → **Verify growth from space**.
-* With no backends running, pledges and the satellite scan run as a local
-  simulation (typewriter swarm logs, NDVI, escrow release).
 
-### Full stack — Live (EVM bridge + AI swarm)
+Connect MetaMask (the app auto-switches to Sepolia), pick a forest or drop a pin, **Pledge**
+(toggle **Give privately** for a shielded donation), then **Verify growth** to release the funds.
 
-Run three processes (three terminals). Configure endpoints once:
+Contracts (Hardhat):
+
 ```bash
-cd web && cp .env.example .env   # VITE_BRIDGE_URL / VITE_SWARM_URL (defaults are fine locally)
+cd evm
+npm install
+npx hardhat test   # 14/14 passing
 ```
-
-**1) EVM Privacy-Pools bridge — `localhost:3001`**
-```bash
-cd pp-bridge
-npm install                      # needs a GitHub token for the private @0xbow-io SDK
-npm run dev                      # real attempt
-# …or run simulated (no SDK / no keys):
-FORCE_SIMULATION=true node server.js
-```
-*Wallets, faucet funding, Sepolia RPC and ZK/direct-deposit config: see [WALLETS_SETUP.md](WALLETS_SETUP.md).*
-
-**2) Solana AI swarm — `localhost:8000`**
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r backend/requirements.txt          # full (rasterio needs GDAL; solana)
-# …or the light/simulated set (enough to run the swarm):
-pip install fastapi "uvicorn[standard]" websockets base58 numpy
-
-python backend/generate_sample_tiles.py          # optional: mock Sentinel-2 TIFFs in backend/data/
-python backend/agent_swarm.py
-```
-
-**3) Frontend — `localhost:5173`**
-```bash
-cd web && npm run dev
-```
-The tool auto-detects the running bridge/swarm (`mode: "real"` in responses).
-**Pledge** routes through the bridge (private = deposit + ZK transfer; public =
-direct deposit). **Verify growth from space** triggers the real swarm: NDVI
-computation, a Solana devnet release, and live logs streamed into the in-app
-console.
-
-Stop everything: `lsof -tiTCP:3001,8000,5173 | xargs kill`
-
-> Full frontend + integration details (architecture, contracts, real-vs-simulated
-> matrix): **[`web/HANDOFF.md`](web/HANDOFF.md)**.
-
-### Real vs Simulated (summary)
-
-| | Real | Simulated (default) |
-|---|---|---|
-| Bridge SDK / keys | `@0xbow-io` SDK + `pp-bridge/.env` keys, `FORCE_SIMULATION=false` | SDK/keys absent → mocked txs & balances |
-| NDVI | `rasterio` on real Sentinel-2 tiles | numpy synthetic NDVI |
-| Solana release | real devnet transfer (explorable sig) | mocked signature `5uVq…` |
-| Frontend | bridge/WS reachable → real calls | backends down → local simulation |
-
-### Legacy console (optional)
-
-The original MVVM dashboard still works standalone: open the root `index.html`
-in a browser for a fully client-side simulated demo (globe, swarm log, PP widget).
 
 ---
 
-## 🛠️ Solana Anchor Program Setup
+## 🔐 Privacy Pools v2 (0xbow bounty)
 
-To build the Rust contract program:
+The 0xbow bounty mandates the v2 SDK (`@0xbow-io/privacy-pools-v2-sdk`). Configure the private
+registry from [`web/.npmrc.example`](web/.npmrc.example) — the token is read from the
+`NODE_AUTH_TOKEN` environment variable at install time, so no secret lands in the repo:
 
-1. **Install Rust, Solana CLI & Anchor CLI (Isolated Local Setup)**:
-   Run the following commands in the project root to install everything inside `.rustup`, `.cargo`, `.avm`, and `.solana` folders (easily deletable once the hackathon is over):
-   
-   ```bash
-   # 1. Define local directories
-   export RUSTUP_HOME="$(pwd)/.rustup"
-   export CARGO_HOME="$(pwd)/.cargo"
-   export AVM_HOME="$(pwd)/.avm"
+```bash
+cd web
+cp .npmrc.example .npmrc
+NODE_AUTH_TOKEN='<0xbow read token>' npm install @0xbow-io/privacy-pools-v2-sdk@beta
+```
 
-   # 2. Install Rust locally (without modifying global PATH)
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
-   source "$CARGO_HOME/env"
+Ask the 0xbow maintainer for a token if you get a `401` (the hackathon tokens are short-lived).
+Migration of the *"Give privately"* flow from the public core SDK to the v2 SDK is in progress.
 
-   # 3. Download and unpack Solana CLI locally
-   if [ "$(uname -m)" = "arm64" ]; then
-     curl -sSfL https://release.anza.xyz/stable/solana-release-aarch64-apple-darwin.tar.bz2 -o solana.tar.bz2
-   else
-     curl -sSfL https://release.anza.xyz/stable/solana-release-x86_64-apple-darwin.tar.bz2 -o solana.tar.bz2
-   fi
-   mkdir -p .solana
-   tar -jxf solana.tar.bz2 -C .solana --strip-components 1
-   rm solana.tar.bz2
+---
 
-   # 4. Set current terminal session PATH
-   export PATH="$(pwd)/.cargo/bin:$(pwd)/.solana/bin:$(pwd)/.avm/bin:$PATH"
+## 🏆 Bounties
 
-   # 5. Install AVM and Anchor CLI locally
-   cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
-   avm install latest
-   avm use latest
-   ```
-   
-   *Note: Every time you open a new terminal window to build or deploy, run this command to restore paths:*
-   ```bash
-   export RUSTUP_HOME="$(pwd)/.rustup"
-   export CARGO_HOME="$(pwd)/.cargo"
-   export AVM_HOME="$(pwd)/.avm"
-   source "$CARGO_HOME/env"
-   export PATH="$(pwd)/.cargo/bin:$(pwd)/.solana/bin:$(pwd)/.avm/bin:$PATH"
-   ```
+Naura targets three cash bounties at ctrl/shift Hackathon 2026 — see [`BOUNTIES.md`](BOUNTIES.md):
 
-2. Inside `/anchor` directory:
-   ```bash
-   anchor build
-   ```
-3. Deploy to devnet/localnet:
-   ```bash
-   anchor deploy
-   ```
+- 🦾 **Blockchain for Good Alliance** — Web3 for environmental impact + on-chain transparency
+- 🕶️ **0xbow Privacy Pools** — a UI on top of Privacy Pools (private donations)
+- 🧪 **SiteLab** — best landing page / website
