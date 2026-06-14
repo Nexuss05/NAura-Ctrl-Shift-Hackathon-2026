@@ -9,6 +9,7 @@ import { FORESTS, goalProgress, fmt } from "./data.js";
 import { bridge, bridgeReachable } from "./lib/bridge.js";
 import { useSwarm } from "./hooks/useSwarm.js";
 import * as escrow from "./lib/escrow.js";
+import * as pp from "./lib/privacypool.js";
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const smooth = () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -84,6 +85,8 @@ export default function App() {
     // Best-effort real EVM bridge call; fall back to the local simulation.
     let mode = "simulated";
     let escrowTx = null;
+    let privateMode = false;
+    let ppAmt = 0;
     try {
       if (await bridgeReachable()) {
         if (privacy) {
@@ -102,7 +105,15 @@ export default function App() {
     // Best-effort: also escrow on-chain via the Naura EVM contract when configured (see ../evm).
     // Guarded by isConfigured() + try/catch so the simulated demo is never affected.
     try {
-      if (escrow.isConfigured() && !custom) {
+      if (privacy && pp.isConfigured() && !custom) {
+        // REAL private donation: shielded deposit into the Privacy Pool (client-side, no backend)
+        ppAmt = Math.min(amt, 0.005);
+        const { txHash } = await pp.privateDeposit(ppAmt);
+        escrowTx = txHash;
+        privateMode = true;
+        console.log(`Privacy Pools: shielded ${ppAmt} ETH, tx ${txHash}`);
+        mode = "private (Privacy Pools)";
+      } else if (escrow.isConfigured() && !custom) {
         const me = account || (await escrow.connectedAddress());
         let rec = chainIds.current[target.id];
         if (!rec) {
@@ -132,9 +143,12 @@ export default function App() {
         const ex = prev[target.id];
         return { ...prev, [target.id]: { given: (ex?.given || 0) + amt, healthAtJoin: ex?.healthAtJoin ?? target.health } };
       });
-      setMessage(escrowTx
-        ? `Real on-chain escrow: <strong>${Math.min(amt, 0.002)} ETH</strong> locked on Sepolia · <a href="https://sepolia.etherscan.io/tx/${escrowTx}" target="_blank" rel="noopener">view tx ↗</a>`
-        : ""); // simulated: confirmation lives in the "locked safely" block
+      setMessage(
+        privateMode
+          ? `Private donation shielded via Privacy Pools — <strong>${ppAmt} ETH</strong> · <a href="https://sepolia.etherscan.io/tx/${escrowTx}" target="_blank" rel="noopener">view tx ↗</a>`
+          : escrowTx
+          ? `Real on-chain escrow: <strong>${Math.min(amt, 0.002)} ETH</strong> locked on Sepolia · <a href="https://sepolia.etherscan.io/tx/${escrowTx}" target="_blank" rel="noopener">view tx ↗</a>`
+          : ""); // simulated: confirmation lives in the "locked safely" block
     } else {
       const how = privacy ? " privately" : "";
       setMessage(`Thank you. <strong>${fmt(amt)} ETH</strong> is pledged${how} (${mode}) for a new project at ` +

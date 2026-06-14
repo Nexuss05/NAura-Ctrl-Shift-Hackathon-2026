@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@0xbow/privacy-pools-core-sdk": "^1.2.0",
     "ethers": "^6.13.4",
     "framer-motion": "^11.11.0",
     "leaflet": "^1.9.4",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vite-plugin-node-polyfills": "^0.28.0"
   }
 }
